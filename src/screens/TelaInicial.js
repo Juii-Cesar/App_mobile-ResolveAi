@@ -38,7 +38,6 @@ const styles = StyleSheet.create({
     padding: 30, 
     justifyContent: 'space-between', 
   },
-
   textGroup: {
     marginTop: 100, 
   },

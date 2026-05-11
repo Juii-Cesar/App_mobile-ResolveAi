@@ -17,7 +17,7 @@ export default function TelaAbertura({ navigation }) {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={BACKGROUND_COLOR} translucent={true} />
 
-      {/* LOGO  */}
+      {/* falta a logo, depois edito, ou se você tiver ai o arquivo  */}
 
     </View>
   );
