@@ -1,0 +1,6 @@
+assets -> imagens, icones e fontes
+components -> botões, cards, inputs
+screens -> telas(login, home)
+services -> config de API e integração c FireBase
+navigation -> config de rotas (tab navigation)
+context -> autenticação de informações do usuario (AuthContext)
