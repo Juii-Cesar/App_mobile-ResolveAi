@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, Modal, TextInput } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 
 const BLUE_COLOR = '#076BDE';
 const BG_GRAY = '#DBDBDB'; 
@@ -8,11 +9,23 @@ const MODAL_BG = '#F1F4F6';
 
 export default function TelaInicial({ navigation }) {
   const [modalVisivel, setModalVisivel] = useState(false);
+  
+  const [ddd, setDdd] = useState('21'); 
+  const [telefone, setTelefone] = useState('');
+
+  const formatarTelefone = (texto) => {
+    let num = texto.replace(/\D/g, '');
+
+    if (num.length > 5) {
+      num = num.replace(/^(\d{5})(\d)/, '$1-$2');
+    }
+    setTelefone(num);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-
+        
         <View style={styles.textGroup}>
           <Text style={styles.blueText}>RESOL</Text>
           <Text style={styles.blueText}>VE</Text>
@@ -33,26 +46,50 @@ export default function TelaInicial({ navigation }) {
         visible={modalVisivel}
         onRequestClose={() => setModalVisivel(false)}
       >
-        <TouchableOpacity 
-          style={styles.modalOverlay} 
-          activeOpacity={1} 
-          onPress={() => setModalVisivel(false)}
-        >
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setModalVisivel(false)}>
           <View style={styles.bottomSheet} onStartShouldSetResponder={() => true}>
-
+            
             <View style={styles.dragHandle} />
             <View style={styles.phoneRow}>
+
               <View style={styles.dddBox}>
-                <Text style={styles.inputText}>(  ) ▼</Text>
+
+                <View style={styles.fakePickerUI} pointerEvents="none">
+                  <Text style={styles.fakePickerText}>({ddd})</Text>
+                  <Text style={styles.fakePickerIcon}>▼</Text>
+                </View>
+
+                <Picker
+                  selectedValue={ddd}
+                  onValueChange={(itemValue) => setDdd(itemValue)}
+                  style={styles.invisiblePicker}
+                  mode="dropdown"
+                >
+                  <Picker.Item label="(11)" value="11" />
+                  <Picker.Item label="(21)" value="21" />
+                  <Picker.Item label="(31)" value="31" />
+                  <Picker.Item label="(41)" value="41" />
+                  <Picker.Item label="(51)" value="51" />
+                </Picker>
               </View>
+
               <TextInput 
                 style={styles.phoneInput} 
-                keyboardType="phone-pad" 
-                placeholder="Número do celular"
+                keyboardType="numeric"
+                placeholder="99999-9999"
+                value={telefone}
+                onChangeText={formatarTelefone}
+                maxLength={10}
               />
             </View>
 
-            <TouchableOpacity style={styles.modalButton}>
+            <TouchableOpacity 
+              style={styles.modalButton}
+              onPress={() => {
+                setModalVisivel(false);
+                navigation.navigate('Token');
+              }}
+            >
               <Text style={styles.modalButtonText}>ENTRAR</Text>
             </TouchableOpacity>
 
@@ -62,11 +99,19 @@ export default function TelaInicial({ navigation }) {
               <View style={styles.line} />
             </View>
 
-            <TouchableOpacity style={styles.socialButton}>
+            <TouchableOpacity 
+              style={styles.socialButton}
+              activeOpacity={0.7}
+              onPress={() => console.log('Botão Google clicado!')}
+            >
               <Text style={styles.socialButtonText}>Continuar com o Google</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.socialButton}>
+            <TouchableOpacity 
+              style={styles.socialButton}
+              activeOpacity={0.7}
+              onPress={() => console.log('Botão E-mail clicado!')}
+            >
               <Text style={styles.socialButtonText}>Continuar por e-mail</Text>
             </TouchableOpacity>
 
@@ -81,40 +126,39 @@ const styles = StyleSheet.create({
   container: { 
     flex: 1, 
     backgroundColor: BG_GRAY 
-},
+  },
   content: { 
     flex: 1, 
     padding: 30, 
     justifyContent: 'space-between' 
-},
+  },
   textGroup: { 
-    marginTop: 100 
-},
+    marginTop: 100 },
   blueText: { 
     fontFamily: 'Homenaje_400Regular', 
     fontSize: 128, 
     color: BLUE_COLOR, 
     lineHeight: 115 
-},
+  },
   whiteText: { 
     fontFamily: 'Homenaje_400Regular', 
     fontSize: 128, 
     color: WHITE_COLOR, 
     lineHeight: 115 
-},
+  },
   button: { 
     backgroundColor: BLUE_COLOR, 
     borderRadius: 30, 
     paddingVertical: 20, 
     alignItems: 'center', 
     marginBottom: 40 
-},
+  },
   buttonText: { 
     fontFamily: 'Homenaje_400Regular', 
     color: WHITE_COLOR, 
     fontSize: 48, 
     textTransform: 'uppercase' 
-},
+  },
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -128,82 +172,116 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     alignItems: 'center',
   },
-  dragHandle: {
-    width: 40,
-    height: 5,
-    backgroundColor: '#CCC',
-    borderRadius: 3,
-    marginBottom: 20,
+  dragHandle: { 
+    width: 40, 
+    height: 5, 
+    backgroundColor: '#CCC', 
+    borderRadius: 3, 
+    marginBottom: 20 
   },
-  phoneRow: {
-    flexDirection: 'row',
-    width: '100%',
-    marginBottom: 15,
+  phoneRow: { 
+    flexDirection: 'row', 
+    width: '100%', 
+    marginBottom: 15, 
+    height: 55 
   },
   dddBox: {
     borderWidth: 1,
     borderColor: '#000',
-    padding: 10,
     marginRight: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: WHITE_COLOR,
+    width: 100, 
+    height: 55,
+    position: 'relative',
+  },
+  fakePickerUI: {
+    position: 'absolute',
+    top: 0, bottom: 0, left: 0, right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  fakePickerText: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 26, 
+    color: '#000',
+  },
+  fakePickerIcon: {
+    fontSize: 12, 
+    marginLeft: 6,
+    color: '#000',
+  },
+  invisiblePicker: {
+    width: '100%',
+    height: '100%',
+    opacity: 0,
+    zIndex: 2,
+  },
+  pickerStyle: {
+    width: '100%',
+    height: '100%',
+    color: '#000',
+    transform: [{ scaleX: 1.1 }, { scaleY: 1.1 }],
+    fontSize: 24, 
+    fontFamily: 'Homenaje_400Regular',
   },
   phoneInput: {
     flex: 1,
     borderWidth: 1,
     borderColor: '#000',
-    padding: 10,
+    paddingHorizontal: 15,
     backgroundColor: WHITE_COLOR,
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 20,
-  },
-  inputText: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 20,
-  },
-  modalButton: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#000',
-    padding: 10,
-    alignItems: 'center',
-    backgroundColor: WHITE_COLOR,
-    marginBottom: 15,
-  },
-  modalButtonText: {
     fontFamily: 'Homenaje_400Regular',
     fontSize: 24,
-    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 15,
+  modalButton: { 
+    width: '100%', 
+    borderWidth: 1, 
+    borderColor: '#000', 
+    padding: 10, 
+    alignItems: 'center', 
+    backgroundColor: WHITE_COLOR, 
+    marginBottom: 15, 
+    height: 55, 
+    justifyContent: 'center' 
   },
-  line: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#000',
+  modalButtonText: { 
+    fontFamily: 'Homenaje_400Regular', 
+    fontSize: 28, 
+    textTransform: 'uppercase' 
   },
-  ouText: {
-    marginHorizontal: 10,
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 24,
-    textTransform: 'lowercase',
+  dividerRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    width: '100%', 
+    marginBottom: 15 
   },
-  socialButton: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#000',
-    padding: 10,
-    alignItems: 'center',
-    backgroundColor: WHITE_COLOR,
-    marginBottom: 10,
+  line: { 
+    flex: 1, 
+    height: 1, 
+    backgroundColor: '#000' 
   },
-  socialButtonText: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 20,
+  ouText: { 
+    marginHorizontal: 10, 
+    fontFamily: 'Homenaje_400Regular', 
+    fontSize: 24, 
+    textTransform: 'lowercase' 
+  },
+  socialButton: { 
+    width: '100%', 
+    borderWidth: 1, 
+    borderColor: '#000', 
+    padding: 10, 
+    alignItems: 'center', 
+    backgroundColor: WHITE_COLOR, 
+    marginBottom: 10, 
+    height: 55, 
+    justifyContent: 'center' 
+  },
+  socialButtonText: { 
+    fontFamily: 'Homenaje_400Regular', 
+    fontSize: 24 
   },
 });
