@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "../components/Button";
 import { SelectButton } from "../components/SelectButton";
@@ -10,13 +10,15 @@ export default function TelaTipoConta() {
     profissional: {
       title: "Profissional",
       description:
-        "Quero divulgar meu trabalho, \nconectar-me\ncom clientes da minha \nregião e aumentar minha\nrenda.",
+        "Quero divulgar meu trabalho, \nconectar-me com clientes da\nminha região e aumentar\nminha renda.",
+      img: require("../assets/img/profissional.png"),
     },
 
     cliente: {
       title: "Cliente",
       description:
-        "Quero contratar profissionais de confiança perto de mim para resolver imprevistos e realizar serviços no dia a dia.",
+        "Quero contratar profissionais de confiança perto de mim\npara resolver imprevistos e realizar serviços no dia a dia.",
+      img: require("../assets/img/usuario.png"),
     },
   };
 
@@ -38,7 +40,7 @@ export default function TelaTipoConta() {
           />
         </View>
 
-        <View style={styles.imagePlaceholder} />
+        <Image source={content[accountType].img} />
 
         <Text style={styles.description}>
           {content[accountType].description}
@@ -54,8 +56,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F2F2F2",
-
     alignItems: "center",
+    justifyContent:'center'
   },
 
   card: {
@@ -66,8 +68,9 @@ const styles = StyleSheet.create({
 
   title: {
     textAlign: "left",
-    fontSize: 33,
+    fontSize: 36,
     color: "#076BDE",
+    fontFamily: "Homenaje_400Regular",
   },
 
   buttonsContainer: {
@@ -78,6 +81,7 @@ const styles = StyleSheet.create({
 
   description: {
     textAlign: "center",
-    fontSize: 22,
+    fontSize: 30,
+    fontFamily: "Homenaje_400Regular",
   },
 });

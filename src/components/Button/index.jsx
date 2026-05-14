@@ -34,7 +34,8 @@ const styles = StyleSheet.create({
 
   text: {
     color: "#fff",
-    fontSize: 26,
+    fontSize: 30,
+    fontFamily: "Homenaje_400Regular",
   },
 
   selectedText: {
