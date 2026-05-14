@@ -6,6 +6,7 @@ import { useFonts, Homenaje_400Regular } from '@expo-google-fonts/homenaje';
 import TelaAbertura from './src/screens/TelaAbertura';
 import TelaInicial from './src/screens/TelaInicial';
 import TelaToken from './src/screens/TelaToken';
+import TelaTipoConta from './src/screens/TelaTipoConta';
 
 const Stack = createNativeStackNavigator();
 
@@ -24,6 +25,7 @@ export default function App() {
         <Stack.Screen name="Abertura" component={TelaAbertura} />
         <Stack.Screen name="Inicial" component={TelaInicial} />
         <Stack.Screen name="Token" component={TelaToken} />
+        <Stack.Screen name="TipoConta" component={TelaTipoConta} />
       </Stack.Navigator>
     </NavigationContainer>
   );
