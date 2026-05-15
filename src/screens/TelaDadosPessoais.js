@@ -1,17 +1,16 @@
 import React from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context'; 
 import LogoIcon from '../assets/icons/LogoIcon'; 
+import { Button } from '../components/Button';
 
 const BLUE_COLOR = '#076BDE';
 
 export default function TelaDadosPessoais({ navigation }) {
   return (
     <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-      
       <View style={styles.header}>
         <SafeAreaView edges={['top']} />
-        
         <View style={styles.logoContainer}>
           <LogoIcon width={70} height={70} fill="#FFFFFF" />
         </View>
@@ -27,12 +26,10 @@ export default function TelaDadosPessoais({ navigation }) {
           <TextInput style={styles.input} placeholder="CPF" placeholderTextColor="#000" keyboardType="numeric" />
         </View>
 
-        <TouchableOpacity 
-          style={styles.button}
-          onPress={() => console.log('Finalizando cadastro...')}
-        >
-          <Text style={styles.buttonText}>Continuar</Text>
-        </TouchableOpacity>
+        <Button 
+          title="Continuar" 
+          onPress={() => console.log('Finalizado!')} 
+        />
       </View>
     </SafeAreaView>
   );
@@ -49,7 +46,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoContainer: {
-    marginTop: 40, 
+    marginTop: 40 
   },
   content: { 
     flex: 1, 
@@ -82,19 +79,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Homenaje_400Regular',
     color: '#000',
   },
-  button: {
-    backgroundColor: BLUE_COLOR,
-    width: 225,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#000',
-  },
   buttonText: {
     color: '#FFF',
-    fontSize: 555,
+    fontSize: 36,
     fontFamily: 'Homenaje_400Regular',
-  },
+},
 });

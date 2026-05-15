@@ -14,13 +14,9 @@ import TelaDadosPessoais from './src/screens/TelaDadosPessoais';
 const Stack = createNativeStackNavigator();
 
 export default function App() {
-  let [fontsLoaded] = useFonts({
-    Homenaje_400Regular,
-  });
+  let [fontsLoaded] = useFonts({ Homenaje_400Regular });
 
-  if (!fontsLoaded) {
-    return null; 
-  }
+  if (!fontsLoaded) return null; 
 
   return (
     <UserProvider>
@@ -29,7 +25,7 @@ export default function App() {
           <Stack.Screen name="Abertura" component={TelaAbertura} />
           <Stack.Screen name="Inicial" component={TelaInicial} />
           <Stack.Screen name="Token" component={TelaToken} />
-          <Stack.Screen name="TipoConta" component={TelaTipoConta} />
+          <Stack.Screen name="TelaTipoConta" component={TelaTipoConta} />
           <Stack.Screen name="TelaDadosPessoais" component={TelaDadosPessoais} />
         </Stack.Navigator>
       </NavigationContainer>

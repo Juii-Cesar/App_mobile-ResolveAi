@@ -56,9 +56,9 @@ export default function TelaToken({ navigation }) {
       <View style={styles.avancarContainer}>
         <TouchableOpacity 
           style={styles.circleButtonAvancar}
-          onPress={() => navigation.navigate('TipoConta')}
+          onPress={() => navigation.navigate('TelaTipoConta')}
         >
-          <Ionicons name="arrow-forward" size={30} color={BLUE_COLOR} />
+          <Feather name="arrow-right" size={30} color={BLUE_COLOR} />
         </TouchableOpacity>
       </View>
 

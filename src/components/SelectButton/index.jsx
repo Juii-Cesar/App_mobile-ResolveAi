@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#000",
 
-    backgroundColor: "#FFF",
+    backgroundColor: "#ffffff00",
 
     justifyContent: "center",
     alignItems: "center",
@@ -36,8 +36,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#076BDE",
   },
   selectButtonText: {
-    fontSize: 26,
+    fontSize: 30,
     color: "#000",
+    fontFamily: "Homenaje_400Regular",
   },
 
   selectButtonTextActive: {
