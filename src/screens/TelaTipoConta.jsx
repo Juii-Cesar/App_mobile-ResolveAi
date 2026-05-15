@@ -1,10 +1,16 @@
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context"; 
+
 import { Button } from "../components/Button";
 import { SelectButton } from "../components/SelectButton";
-export default function TelaTipoConta() {
+
+import { useUser } from "../context/UserContext";
+
+export default function TelaTipoConta({ navigation }) {
   const [accountType, setAccountType] = useState("profissional");
+
+  const { setTipoConta } = useUser();
 
   const content = {
     profissional: {
@@ -12,7 +18,6 @@ export default function TelaTipoConta() {
       description:
         "Quero divulgar meu trabalho, \nconectar-me\ncom clientes da minha \nregião e aumentar minha\nrenda.",
     },
-
     cliente: {
       title: "Cliente",
       description:
@@ -44,7 +49,13 @@ export default function TelaTipoConta() {
           {content[accountType].description}
         </Text>
 
-        <Button title="Continuar" />
+        <Button 
+          title="Continuar" 
+          onPress={() => {
+            setTipoConta(accountType); 
+            navigation.navigate('TelaDadosPessoais');
+          }} 
+        />
       </View>
     </SafeAreaView>
   );
@@ -54,28 +65,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F2F2F2",
-
     alignItems: "center",
   },
-
   card: {
     width: "80%",
     alignItems: "center",
     gap: 20,
   },
-
   title: {
     textAlign: "left",
     fontSize: 33,
     color: "#076BDE",
   },
-
   buttonsContainer: {
     flexDirection: "row",
     alignItems: "center",
     gap: 20,
   },
-
   description: {
     textAlign: "center",
     fontSize: 22,

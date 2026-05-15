@@ -41,11 +41,10 @@ export default function TelaToken({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.circleButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.goBack()}>
           <SetaVoltar width={45} height={45} />
         </TouchableOpacity>
-
-        <View style={styles.logoContainer}>
+        <View style={styles.iconContainer}>
           <Logo width={45} height={45} />
         </View>
       </View>

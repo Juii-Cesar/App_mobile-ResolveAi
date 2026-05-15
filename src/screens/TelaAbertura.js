@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, View, StatusBar, Image } from 'react-native';
+import { StyleSheet, View, StatusBar } from 'react-native';
+import LogoIcon from '../assets/icons/LogoIcon';
 
 const BACKGROUND_COLOR = '#076BDE'; 
 
@@ -17,7 +18,7 @@ export default function TelaAbertura({ navigation }) {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={BACKGROUND_COLOR} translucent={true} />
 
-      {/* falta a logo, depois edito, ou se você tiver ai o arquivo  */}
+      <LogoIcon width={150} height={150} fill="#FFFFFF" />
 
     </View>
   );
@@ -29,9 +30,5 @@ const styles = StyleSheet.create({
     backgroundColor: BACKGROUND_COLOR,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  logo: {
-    width: 200,
-    height: 200,
   },
 });
