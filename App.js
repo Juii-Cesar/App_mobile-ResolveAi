@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useFonts, Homenaje_400Regular } from '@expo-google-fonts/homenaje';
 
-import { UserProvider } from './src/context/UserContext'; 
+import { UserTypeProvider } from "./src/context/UserTypeContext"; 
 
 import TelaAbertura from './src/screens/TelaAbertura';
 import TelaInicial from './src/screens/TelaInicial';
@@ -19,16 +19,19 @@ export default function App() {
   if (!fontsLoaded) return null; 
 
   return (
-    <UserProvider>
+    <UserTypeProvider>
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Abertura" component={TelaAbertura} />
           <Stack.Screen name="Inicial" component={TelaInicial} />
           <Stack.Screen name="Token" component={TelaToken} />
           <Stack.Screen name="TelaTipoConta" component={TelaTipoConta} />
-          <Stack.Screen name="TelaDadosPessoais" component={TelaDadosPessoais} />
+          <Stack.Screen
+            name="TelaDadosPessoais"
+            component={TelaDadosPessoais}
+          />
         </Stack.Navigator>
       </NavigationContainer>
-    </UserProvider>
+    </UserTypeProvider>
   );
 }

@@ -3,14 +3,11 @@ import { Image, StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "../components/Button";
 import { SelectButton } from "../components/SelectButton";
-
-
-import { useUser } from "../context/UserContext";
+import { useUserType } from "../context/UserTypeContext";
 
 export default function TelaTipoConta({ navigation }) {
-  const [accountType, setAccountType] = useState("profissional");
-  const { setTipoConta } = useUser();
-
+  // const [accountType, setAccountType] = useState("profissional");
+  const { accountType,setAccountType } = useUserType();
   const content = {
     profissional: {
       title: "Profissional",
@@ -53,7 +50,8 @@ export default function TelaTipoConta({ navigation }) {
         <Button 
           title="Continuar" 
           onPress={() => {
-            setTipoConta(accountType); 
+            console.log(accountType);
+            
             navigation.navigate('TelaDadosPessoais');
           }} 
         />
