@@ -14,7 +14,7 @@ import TelaInicial from './src/screens/TelaInicial';
 import TelaToken from './src/screens/TelaToken';
 import TelaTipoConta from './src/screens/TelaTipoConta';
 import TelaDadosPessoais from './src/screens/TelaDadosPessoais';
-
+import { TelaQuaseLa } from './src/screens/TelaQuaseLa';
 import TelaInicio from './src/screens/TelaInicio';
 import TelaServicos from './src/screens/TelaServicos';
 import TelaConta from './src/screens/TelaConta';
@@ -88,6 +88,7 @@ function RootNavigator() {
         <Stack.Screen name="Token"             component={TelaToken} />
         <Stack.Screen name="TelaTipoConta"     component={TelaTipoConta} />
         <Stack.Screen name="TelaDadosPessoais" component={TelaDadosPessoais} />
+        <Stack.Screen name="TelaQuaseLa" component={TelaQuaseLa} />
         <Stack.Screen name="Tabs"              component={TabsNavigator} />
       </Stack.Navigator>
 
