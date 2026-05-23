@@ -73,13 +73,11 @@ export default function TelaEspecialidades({ navigation }) {
           })}
         </ScrollView>
 
-        {/* Rodapé contendo o botão e os termos de uso de dados */}
         <View style={styles.footerContainer}>
           <Button 
             title="Continuar" 
             onPress={() => {
               console.log('Especialidades escolhidas:', selecionados);
-              // Próximo passo do fluxo profissional
             }} 
           />
           
@@ -164,7 +162,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     marginVertical: 20,
-    gap: 12, // Dá um respiro pequeno entre o botão e o texto
+    gap: 12,
   },
   textoLegal: {
     fontFamily: 'Homenaje_400Regular',
