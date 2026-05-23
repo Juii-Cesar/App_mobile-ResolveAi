@@ -28,7 +28,7 @@ export default function TelaDadosPessoais({ navigation }) {
 
         <Button 
           title="Continuar" 
-          onPress={() => console.log('Finalizado!')} 
+          onPress={() => navigation.navigate('TelaEspecialidades')}
         />
       </View>
     </SafeAreaView>
