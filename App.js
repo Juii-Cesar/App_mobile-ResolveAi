@@ -11,6 +11,8 @@ import TelaToken from './src/screens/TelaToken';
 import TelaTipoConta from './src/screens/TelaTipoConta';
 import TelaDadosPessoais from './src/screens/TelaDadosPessoais';
 import TelaEspecialidades from './src/screens/TelaEspecialidades';
+import TelaVerificacao from './src/screens/TelaVerificacao';
+import TelaFotoPerfil from './src/screens/TelaFotoPerfil';
 
 const Stack = createNativeStackNavigator();
 
@@ -29,6 +31,8 @@ export default function App() {
           <Stack.Screen name="TelaTipoConta" component={TelaTipoConta} />
           <Stack.Screen name="TelaDadosPessoais" component={TelaDadosPessoais} />
           <Stack.Screen name="TelaEspecialidades" component={TelaEspecialidades} />
+          <Stack.Screen name="TelaVerificacao" component={TelaVerificacao} />
+          <Stack.Screen name="TelaFotoPerfil" component={TelaFotoPerfil} />
         </Stack.Navigator>
       </NavigationContainer>
     </UserTypeProvider>

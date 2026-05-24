@@ -78,6 +78,7 @@ export default function TelaEspecialidades({ navigation }) {
             title="Continuar" 
             onPress={() => {
               console.log('Especialidades escolhidas:', selecionados);
+              navigation.navigate('TelaVerificacao');
             }} 
           />
           
