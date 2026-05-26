@@ -12,17 +12,26 @@ export default function TelaVerificacao({ navigation, route }) {
   const [etapasConcluidas, setEtapasConcluidas] = useState([]);
 
   useEffect(() => {
-    if (route.params?.fotoConcluida && !etapasConcluidas.includes('foto')) {
-      setEtapasConcluidas([...etapasConcluidas, 'foto']);
-    }
-  }, [route.params?.fotoConcluida]);
+  if (route.params?.fotoConcluida && !etapasConcluidas.includes('foto')) {
+    setEtapasConcluidas([...etapasConcluidas, 'foto']);
+  }
+  if (route.params?.documentoConcluido && !etapasConcluidas.includes('documento')) {
+    setEtapasConcluidas([...etapasConcluidas, 'documento']);
+  }
+  if (route.params?.residenciaConcluido && !etapasConcluidas.includes('residencia')) {
+    setEtapasConcluidas([...etapasConcluidas, 'residencia']);
+  }
+  if (route.params?.termosConcluidos && !etapasConcluidas.includes('termos')) {
+    setEtapasConcluidas([...etapasConcluidas, 'termos']);
+  }
+}, [route.params?.fotoConcluida, route.params?.documentoConcluido, route.params?.residenciaConcluido, route.params?.termosConcluidos]);
 
   const etapas = [
     { id: 'foto', titulo: 'Foto de perfil', sub: 'Em un app de serviço, ver o rosto do profissional gera muita confiança para o cliente.', rota: 'TelaFotoPerfil' },
-    { id: 'documento', titulo: 'Documento de Identidade (RG ou CNH)', sub: 'Obrigatório para validar quem é você.', rota: '' },
-    { id: 'residencia', titulo: 'Comprovante de Residência', sub: 'Para confirmar sua área de atuação local.', rota: '' },
+    { id: 'documento', titulo: 'Documento de Identidade (RG ou CNH)', sub: 'Obrigatório para validar quem é você.', rota: 'TelaDocumento' },
+    { id: 'residencia', titulo: 'Comprovante de Residência', sub: 'Para confirmar sua área de atuação local.', rota: 'TelaResidencia' },
     { id: 'portfolio', titulo: 'Fotos de Serviços Anteriores (Opcional)', sub: 'Monte seu portfólio para se destacar.', rota: '' },
-    { id: 'termos', titulo: 'Termos de Uso e Regras da Comunidade', sub: 'Leia e aceite para continuar.', rota: '' },
+    { id: 'termos', titulo: 'Termos de Uso e Regras da Comunidade', sub: 'Leia e aceite para continuar.', rota: 'TelaTermos' },
     { id: 'antecedentes', titulo: 'Análise de Antecedentes', sub: 'Aguardando o envio dos documentos acima.', rota: '' },
   ];
 
@@ -92,12 +101,14 @@ export default function TelaVerificacao({ navigation, route }) {
           })}
         </View>
       </ScrollView>
-
       <View style={styles.footer}>
         <Button 
           title="Continuar" 
-          onPress={() => console.log('Avançar fluxo geral')} 
-          disabled={concluidasCount === 0}
+          onPress={() => {
+            console.log('Cadastro do profissional concluído com sucesso!');
+            navigation.navigate('TelaPrincipalProfissional');
+          }} 
+          disabled={false} 
         />
       </View>
     </SafeAreaView>
