@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import LogoIcon from '../assets/icons/LogoIcon'
 
 const servicos = [
   { id: '1' },
@@ -73,9 +74,7 @@ export default function TelaServicos() {
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       
       <View style={styles.header}>
-        <View style={styles.logoCircle}>
-          <Text style={styles.logoText}>S</Text>
-        </View>
+        <LogoIcon width={50} height={50}/>
       </View>
 
       <FlatList
@@ -90,88 +89,117 @@ export default function TelaServicos() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#CBCBCB',
-  },
-  header: {
-    alignItems: 'flex-end',
-    paddingHorizontal: 14,
-    paddingTop: 10,
-    marginBottom: 10,
-  },
-  logoCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#1565C0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
-  lista: {
-    paddingHorizontal: 14,
-    gap: 16,         
-    paddingBottom: 16,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#bbb',
-    padding: 14,
-    gap: 10,
-  },
-  dataServico: {
-    fontSize: 11,
-    color: '#777',
-    textAlign: 'right', 
-  },
-  cardMeio: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: '#888',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#e8e8e8',
-  },
-  cardInfo: {
-    flex: 1,
-  },
-  cardNome: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#111',
-    textDecorationLine: 'underline',
-  },
-  cardProfissao: {
-    fontSize: 12,
-    color: '#444',
-    textDecorationLine: 'underline',
-  },
-  estrelasContainer: {
-    flexDirection: 'row',
-    gap: 3,
-  },
-  comentarioInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    fontSize: 12,
-    color: '#333',
-    backgroundColor: '#f5f5f5',
-  },
+
+safeArea: {
+  flex: 1,
+  backgroundColor: '#D9D9D9',
+},
+
+header: {
+  height: 82,
+  borderBottomWidth: 1,
+  borderBottomColor: '#9BA7B1',
+  alignItems: 'flex-end',
+  justifyContent: 'center',
+  paddingRight: 16,
+  backgroundColor: '#D9D9D9',
+},
+
+logoCircle: {
+  width: 46,
+  height: 46,
+  borderRadius: 30,
+  borderWidth: 2,
+  borderColor: '#1565C0',
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: '#D9D9D9',
+},
+
+logoText: {
+  color: '#1565C0',
+  fontSize: 22,
+  fontWeight: 'bold',
+},
+
+lista: {
+  paddingTop: 28,
+  paddingBottom: 40,
+  gap: 34,
+},
+
+card: {
+  width: '78%',
+  alignSelf: 'center',
+  backgroundColor: '#ECECEC',
+  borderRadius: 24,
+  borderWidth: 2,
+  borderColor: '#222',
+  paddingHorizontal: 14,
+  paddingVertical: 12,
+},
+
+dataServico: {
+  fontSize: 16,
+  color: '#111',
+  textAlign: 'right',
+  marginBottom: 8,
+  fontFamily: 'Homenaje_400Regular',
+},
+
+cardMeio: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
+avatar: {
+  width: 56,
+  height: 56,
+  borderRadius: 50,
+  borderWidth: 2,
+  borderColor: '#222',
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: '#E6ECF2',
+  marginRight: 12,
+},
+
+cardInfo: {
+  flex: 1,
+},
+
+cardNome: {
+  fontSize: 24,
+  color: '#111',
+  lineHeight: 24,
+  fontFamily: 'Homenaje_400Regular',
+},
+
+cardProfissao: {
+  fontSize: 20,
+  color: '#222',
+  lineHeight: 20,
+  fontFamily: 'Homenaje_400Regular',
+},
+
+estrelasContainer: {
+  flexDirection: 'row',
+  gap: 2,
+  marginBottom: 10,
+},
+
+comentarioInput: {
+  marginTop: 10,
+  height: 28,
+  borderWidth: 1,
+  borderColor: '#BEBEBE',
+  borderRadius: 20,
+  paddingHorizontal: 12,
+  backgroundColor: '#DCDCDC',
+  fontSize: 15,
+  color: '#333',
+  fontFamily: 'Homenaje_400Regular',
+  paddingTop: 0,
+  paddingBottom: 0,
+},
 });

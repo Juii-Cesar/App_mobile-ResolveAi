@@ -1,195 +1,197 @@
-import React, { useState } from 'react';
+import React from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-  StyleSheet,
-} from 'react-native';
+ View,
+ Text,
+ StyleSheet,
+ TouchableOpacity,
+ TextInput,
+ ScrollView
+} from "react-native";
+
+import { Ionicons } from "@expo/vector-icons";
+import LogoIcon from '../assets/icons/LogoIcon';
+import { useFonts, Homenaje_400Regular } from '@expo-google-fonts/homenaje';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-const profissionaisIniciais = [
-  { id: '1', favoritado: false },
-  { id: '2', favoritado: false },
-  { id: '3', favoritado: false },
-  { id: '4', favoritado: false },
-  { id: '5', favoritado: false },
+export default function TelaInicio(){
+
+const categorias=[
+"Encanador",
+"Transporte",
+"Limpador de piscina",
+"Montador de móveis",
+"Eletricista"
 ];
 
-const categorias = [
-  'Encanador',
-  'Transporte',
-  'Limpador de piscina',
-  'Montador de móveis',
-  'Eletricista',
-];
+return(
 
-function CardProfissional({ favoritado, onToggle }) {
-  return (
-    <View style={styles.card}>
-      <View style={styles.avatar}>
-        <Ionicons name="person-outline" size={22} color="#555" />
-      </View>
-      <Text style={styles.cardNome}>Profissional{'\n'}em destaque</Text>
-      <TouchableOpacity onPress={onToggle} activeOpacity={0.7}>
-        <Ionicons
-          name={favoritado ? 'star' : 'star-outline'}
-          size={22}
-          color={favoritado ? '#F5A623' : '#222'}
-        />
-      </TouchableOpacity>
-    </View>
-  );
+<SafeAreaView style={styles.container} edges={['top']}>
+
+<View style={styles.header}>
+<LogoIcon width={50} height={50}/>
+</View>
+
+<ScrollView showsVerticalScrollIndicator={false}>
+
+<View style={styles.search}>
+
+<Ionicons
+name="search-outline"
+size={20}
+color="#555"
+/>
+
+<TextInput
+placeholder="O que você precisa?"
+style={styles.input}
+/>
+
+</View>
+
+<View style={styles.tagsContainer}>
+
+{categorias.map((item,index)=>(
+
+<TouchableOpacity
+key={index}
+style={styles.tag}
+>
+
+<Text style={styles.tagText}>
+{item}
+</Text>
+
+</TouchableOpacity>
+
+))}
+
+</View>
+
+{[1,2,3,4,5].map((item)=>(
+
+<TouchableOpacity
+key={item}
+style={styles.card}
+>
+
+<View style={styles.userBox}>
+
+<Ionicons
+name="person-outline"
+size={28}
+/>
+
+</View>
+
+<Text style={styles.cardText}>
+Profissional{"\n"}
+em destaque
+</Text>
+
+<Ionicons
+name="star"
+size={24}
+/>
+
+</TouchableOpacity>
+
+))}
+
+</ScrollView>
+
+</SafeAreaView>
+
+)
+
 }
 
-export default function TelaInicio() {
-  const [profissionais, setProfissionais] = useState(profissionaisIniciais);
+const styles=StyleSheet.create({
 
-  function toggleFavorito(id) {
-    setProfissionais(prev =>
-      prev.map(p => p.id === id ? { ...p, favoritado: !p.favoritado } : p)
-    );
-  }
+container:{
+flex:1,
+backgroundColor:"#D9D9D9"
+},
 
-  return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <View style={styles.container}>
+header: {
+  height: 82,
+  borderBottomWidth: 1,
+  borderBottomColor: '#9BA7B1',
+  alignItems: 'flex-end',
+  justifyContent: 'center',
+  paddingRight: 16,
+  backgroundColor: '#D9D9D9',
+},
 
-        <View style={styles.header}>
-          <View style={styles.logoCircle}>
-            <Text style={styles.logoText}>S</Text>
-          </View>
-        </View>
+search:{
+marginHorizontal:15,
+marginTop:20,
+height:45,
+borderWidth:2,
+borderRadius:30,
+backgroundColor:"#EEE",
+flexDirection:"row",
+alignItems:"center",
+paddingHorizontal:15
+},
 
-        <View style={styles.searchContainer}>
-          <Ionicons name="search-outline" size={16} color="#999" style={{ marginRight: 8 }} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="O que você precisa?"
-            placeholderTextColor="#999"
-          />
-        </View>
+input:{
+marginLeft:10,
+flex:1
+},
 
-        <View style={styles.categoriasContainer}>
-          {categorias.map((cat) => (
-            <TouchableOpacity key={cat} style={styles.chip}>
-              <Text style={styles.chipText}>{cat}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+tagsContainer:{
+marginTop:12,
+paddingHorizontal:15,
+flexDirection:"row",
+flexWrap:"wrap",
+gap:8
+},
 
-        <FlatList
-          data={profissionais}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <CardProfissional
-              favoritado={item.favoritado}
-              onToggle={() => toggleFavorito(item.id)}
-            />
-          )}
-          contentContainerStyle={styles.lista}
-          showsVerticalScrollIndicator={false}
-        />
+tag:{
+borderWidth:1,
+borderColor:"#AAA",
+borderRadius:20,
+paddingVertical:8,
+paddingHorizontal:12,
+backgroundColor:"#EEE"
+},
 
-      </View>
-    </SafeAreaView>
-  );
+tagText:{
+color:"#666",
+fontFamily:'Homenaje_400Regular'
+},
+
+card:{
+width:"75%",
+height:70,
+alignSelf:"center",
+marginTop:18,
+borderWidth:2,
+borderRadius:27,
+backgroundColor:"#EEE",
+paddingHorizontal:18,
+flexDirection:"row",
+alignItems:"center",
+justifyContent:"space-between"
+
+
+},
+
+userBox:{
+height:55,
+width:55,
+borderWidth:2,
+borderRadius:18,
+justifyContent:"center",
+alignItems:"center"
+},
+
+cardText:{
+fontSize:24,
+fontFamily:'Homenaje_400Regular'
+},
+
+TextInput:{
+fontFamily:'Homenaje_400Regular'
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#CBCBCB',
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: 14,
-    paddingTop: 10,
-  },
-  header: {
-    alignItems: 'flex-end',
-    marginBottom: 10,
-  },
-  logoCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#1565C0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#aaa',
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    marginBottom: 10,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 13,
-    color: '#333',
-    padding: 0,
-  },
-  categoriasContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginBottom: 12,
-  },
-  chip: {
-    borderWidth: 1,
-    borderColor: '#444',
-    borderRadius: 14,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    backgroundColor: 'transparent',
-  },
-  chipText: {
-    fontSize: 12,
-    color: '#222',
-  },
-  lista: {
-    gap: 8,
-    paddingBottom: 12,
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#bbb',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1.5,
-    borderColor: '#888',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-    backgroundColor: '#e8e8e8',
-  },
-  cardNome: {
-    flex: 1,
-    fontSize: 13,
-    color: '#222',
-    fontWeight: '500',
-    lineHeight: 18,
-  },
 });
