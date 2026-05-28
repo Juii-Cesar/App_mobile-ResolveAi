@@ -62,7 +62,7 @@ export default function TelaPrincipalProfissional({ navigation }) {
                 <Text style={styles.textoBotaoIniciar}>Iniciar</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => console.log('Abrir menu')}>
+              <TouchableOpacity onPress={() => navigation.navigate('TelaMenuProfissional')}>
                 <Ionicons name="menu" size={32} color="#000" />
               </TouchableOpacity>
             </View>

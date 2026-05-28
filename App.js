@@ -17,6 +17,8 @@ import TelaDocumento from './src/screens/TelaDocumento';
 import TelaResidencia from './src/screens/TelaResidencia';
 import TelaTermos from './src/screens/TelaTermos';
 import TelaPrincipalProfissional from './src/screens/TelaPrincipalProfissional';
+import TelaMenuProfissional from './src/screens/TelaMenuProfissional';
+import TelaAtividades from './src/screens/TelaAtividades';
 
 const Stack = createNativeStackNavigator();
 
@@ -41,6 +43,8 @@ export default function App() {
           <Stack.Screen name="TelaResidencia" component={TelaResidencia} />
           <Stack.Screen name="TelaTermos" component={TelaTermos} />
           <Stack.Screen name="TelaPrincipalProfissional" component={TelaPrincipalProfissional} />
+          <Stack.Screen name="TelaMenuProfissional" component={TelaMenuProfissional} />
+          <Stack.Screen name="TelaAtividades" component={TelaAtividades} />
         </Stack.Navigator>
       </NavigationContainer>
     </UserTypeProvider>
