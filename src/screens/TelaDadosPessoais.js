@@ -6,22 +6,10 @@ import { Button } from '../components/Button';
 import { useUserType } from "../context/UserTypeContext";
 
 
-
-import { useUserType } from '../context/UserTypeContext';
-
 const BLUE_COLOR = '#076BDE';
 
 export default function TelaDadosPessoais({ navigation }) {
-
-  const { accountType } = useUserType();
-
-  const handleAvancar = () => {
-    console.log('Dados salvos! Tipo de conta:', accountType);
-
-    if (accountType === 'profissional') {
-      navigation.navigate('TelaEspecialidades');
-    }};
-
+  const { accountType }=useUserType();
   return (
     <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
       <View style={styles.header}>
@@ -43,7 +31,7 @@ export default function TelaDadosPessoais({ navigation }) {
 
         <Button 
           title="Continuar" 
-          onPress={() => accountType==='cliente'?navigation.navigate('TelaQuaseLa'):null} 
+          onPress={() => accountType==='cliente'?navigation.navigate('TelaQuaseLa'): navigation.navigate('TelaEspecialidades')} 
         />
       </View>
     </SafeAreaView>
@@ -78,22 +66,25 @@ const styles = StyleSheet.create({
     color: BLUE_COLOR,
     textAlign: 'center',
     marginBottom: 30,
+    lineHeight: 45,
   },
-  inputGroup: {
-    width: '100%',
-    alignItems: 'center',
-    gap: 15,
-    marginBottom: 40,
+  inputGroup: { 
+    width: '100%', 
+    gap: 15, 
+    marginBottom: 40 
   },
   input: {
-    backgroundColor: '#FFF',
-    width: 260,
-    height: 45,
-    borderRadius: 15,
-    borderWidth: 1.5,
-    borderColor: '#000',
+    backgroundColor: '#EAEAEA',
+    height: 55,
+    borderRadius: 10,
     paddingHorizontal: 20,
+    fontSize: 18,
     fontFamily: 'Homenaje_400Regular',
-    fontSize: 24,
-  }
+    color: '#000',
+  },
+  buttonText: {
+    color: '#FFF',
+    fontSize: 36,
+    fontFamily: 'Homenaje_400Regular',
+},
 });

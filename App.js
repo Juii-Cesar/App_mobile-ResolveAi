@@ -29,7 +29,8 @@ import TelaResidencia from './src/screens/TelaResidencia';
 import TelaTermos from './src/screens/TelaTermos';
 import TelaPrincipalProfissional from './src/screens/TelaPrincipalProfissional';
 import TelaMenuProfissional from './src/screens/TelaMenuProfissional';
-import TelaAtividades from './src/screens/TelaAtividades';
+import TelaAtividadesDetalhada from './src/screens/TelaAtividades'; 
+import { TelaQuaseLa } from './src/screens/TelaQuaseLa'; 
 
 import TelaInicio   from './src/screens/TelaInicio';
 import TelaServicos from './src/screens/TelaServicos';
@@ -135,6 +136,7 @@ function RootNavigator() {
         <Stack.Screen name="Token"             component={TelaToken} />
         <Stack.Screen name="TelaTipoConta"     component={TelaTipoConta} />
         <Stack.Screen name="TelaDadosPessoais" component={TelaDadosPessoais} />
+        <Stack.Screen name="TelaQuaseLa"       component={TelaQuaseLa} />
         <Stack.Screen name="TelaEspecialidades" component={TelaEspecialidades} />
         <Stack.Screen name="TelaVerificacao"    component={TelaVerificacao} />
         <Stack.Screen name="TelaFotoPerfil"     component={TelaFotoPerfil} />
@@ -143,7 +145,7 @@ function RootNavigator() {
         <Stack.Screen name="TelaTermos"         component={TelaTermos} />
         <Stack.Screen name="TelaPrincipalProfissional" component={TelaPrincipalProfissional} />
         <Stack.Screen name="TelaMenuProfissional"      component={TelaMenuProfissional} />
-        <Stack.Screen name="TelaAtividades"      component={TelaAtividades} />
+        <Stack.Screen name="TelaAtividades"            component={TelaAtividadesDetalhada} />
         <Stack.Screen name="Tabs"              component={TabsNavigator} />
       </Stack.Navigator>
       <BotaoTesteFlutante />
@@ -212,10 +214,7 @@ const styles = StyleSheet.create({
     shadowColor:"#000",
     shadowOpacity:0.25,
     shadowRadius:6,
-    shadowOffset:{
-      width:0,
-      height:3
-    },
+    shadowOffset:{ width:0, height:3 },
     zIndex:999
   },
   botaoFlutuanteTexto:{

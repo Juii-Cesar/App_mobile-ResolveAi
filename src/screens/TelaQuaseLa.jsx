@@ -1,13 +1,16 @@
-import React, { use } from "react";
-import { StyleSheet, View, Text, Image} from "react-native";
+import React from "react";
+import { StyleSheet, View, Text, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import LogoIcon from "../assets/icons/LogoIcon";
-import { Button } from "../components/Button";
+import { useNavigation } from '@react-navigation/native';
 import { useUserType } from "../context/UserTypeContext";
+import { Button } from "../components/Button";
 
 const BLUE_COLOR = "#076BDE";
 
 export const TelaQuaseLa = () => {
+  const navigation = useNavigation();
+  const { accountType } = useUserType();
+
   return (
     <SafeAreaView style={styles.container} edges={["bottom", "left", "right"]}>
       <View style={styles.header}>
@@ -42,7 +45,7 @@ export const TelaQuaseLa = () => {
         <Button
           title="Tirar foto"
           onPress={() =>
-            accountType === "cliente" ? navigation.navigate("Token") : null
+            accountType === "cliente" ? navigation.navigate("Token") : navigation.navigate("TelaDocumento")
           }
         />
       </View>
@@ -102,7 +105,6 @@ const styles = StyleSheet.create({
     fontFamily: "Homenaje_400Regular",
     fontSize:12,
   },
-
   buttonText: {
     color: "#FFF",
     fontSize: 36,
