@@ -1,8 +1,10 @@
-import React from 'react';
-import { StyleSheet, View, Text, TextInput, Alert } from 'react-native';
+import React, { use } from 'react';
+import { StyleSheet, View, Text, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context'; 
 import LogoIcon from '../assets/icons/LogoIcon'; 
 import { Button } from '../components/Button';
+import { useUserType } from "../context/UserTypeContext";
+
 
 
 import { useUserType } from '../context/UserTypeContext';
@@ -41,7 +43,7 @@ export default function TelaDadosPessoais({ navigation }) {
 
         <Button 
           title="Continuar" 
-          onPress={handleAvancar} 
+          onPress={() => accountType==='cliente'?navigation.navigate('TelaQuaseLa'):null} 
         />
       </View>
     </SafeAreaView>
