@@ -13,6 +13,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useFonts, Homenaje_400Regular } from '@expo-google-fonts/homenaje';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import TelaEnderecos from './src/screens/TelaEnderecos';
+
 
 import { UserTypeProvider } from "./src/context/UserTypeContext";
 
@@ -63,8 +65,9 @@ function CustomTabBar({ state, descriptors, navigation }) {
 
      
       {state.routes.map((route, index) => {
-        const isFocused = state.index === index;
         const tab = tabs[index];
+        if (!tab) return null;
+        const isFocused = state.index === index;
 
         return (
           <TouchableOpacity
@@ -100,6 +103,7 @@ function TabsNavigator() {
       <Tab.Screen name="Início"   component={TelaInicio} />
       <Tab.Screen name="Serviços" component={TelaServicos} />
       <Tab.Screen name="Conta"    component={TelaConta} />
+      <Tab.Screen name="TelaEnderecos" component={TelaEnderecos} />
     </Tab.Navigator>
   );
 }

@@ -7,8 +7,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 export default function TelaConta() {
+  const navigation = useNavigation();
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.container}>
@@ -40,12 +42,11 @@ export default function TelaConta() {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.botao}>
+          <TouchableOpacity style={styles.botao} onPress={() => navigation.navigate('TelaEnderecos')}>
             <Text style={styles.botaoTexto}>Endereços</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Gráfico placeholder */}
         <View style={styles.graficoWrapper}>
           <View style={styles.graficoCirculo}>
             <Text style={styles.graficoTexto}>Gráfico{'\n'}Serviços</Text>
