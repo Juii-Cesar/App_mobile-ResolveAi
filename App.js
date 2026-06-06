@@ -23,6 +23,16 @@ import TelaInicial     from './src/screens/TelaInicial';
 import TelaToken       from './src/screens/TelaToken';
 import TelaTipoConta   from './src/screens/TelaTipoConta';
 import TelaDadosPessoais from './src/screens/TelaDadosPessoais';
+import TelaEspecialidades from './src/screens/TelaEspecialidades';
+import TelaVerificacao from './src/screens/TelaVerificacao';
+import TelaFotoPerfil from './src/screens/TelaFotoPerfil';
+import TelaDocumento from './src/screens/TelaDocumento';
+import TelaResidencia from './src/screens/TelaResidencia';
+import TelaTermos from './src/screens/TelaTermos';
+import TelaPrincipalProfissional from './src/screens/TelaPrincipalProfissional';
+import TelaMenuProfissional from './src/screens/TelaMenuProfissional';
+import TelaAtividadesDetalhada from './src/screens/TelaAtividades'; 
+import { TelaQuaseLa } from './src/screens/TelaQuaseLa'; 
 
 import TelaInicio   from './src/screens/TelaInicio';
 import TelaServicos from './src/screens/TelaServicos';
@@ -34,8 +44,6 @@ const TAB_WIDTH = SCREEN_WIDTH / TAB_COUNT;
 
 function CustomTabBar({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
-
-  
   const translateX = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
@@ -55,7 +63,6 @@ function CustomTabBar({ state, descriptors, navigation }) {
 
   return (
     <View style={[styles.tabBar, { paddingBottom: insets.bottom, height: 56 + insets.bottom }]}>
-      
       <Animated.View
         style={[
           styles.tabIndicator,
@@ -63,7 +70,6 @@ function CustomTabBar({ state, descriptors, navigation }) {
         ]}
       />
 
-     
       {state.routes.map((route, index) => {
         const tab = tabs[index];
         if (!tab) return null;
@@ -91,7 +97,6 @@ function CustomTabBar({ state, descriptors, navigation }) {
   );
 }
 
-
 const Tab = createBottomTabNavigator();
 
 function TabsNavigator() {
@@ -107,7 +112,6 @@ function TabsNavigator() {
     </Tab.Navigator>
   );
 }
-
 
 function BotaoTesteFlutante() {
   const navigation = useNavigation();
@@ -125,7 +129,6 @@ function BotaoTesteFlutante() {
   );
 }
 
-
 const Stack = createNativeStackNavigator();
 
 function RootNavigator() {
@@ -137,13 +140,22 @@ function RootNavigator() {
         <Stack.Screen name="Token"             component={TelaToken} />
         <Stack.Screen name="TelaTipoConta"     component={TelaTipoConta} />
         <Stack.Screen name="TelaDadosPessoais" component={TelaDadosPessoais} />
+        <Stack.Screen name="TelaQuaseLa"       component={TelaQuaseLa} />
+        <Stack.Screen name="TelaEspecialidades" component={TelaEspecialidades} />
+        <Stack.Screen name="TelaVerificacao"    component={TelaVerificacao} />
+        <Stack.Screen name="TelaFotoPerfil"     component={TelaFotoPerfil} />
+        <Stack.Screen name="TelaDocumento"      component={TelaDocumento} />
+        <Stack.Screen name="TelaResidencia"     component={TelaResidencia} />
+        <Stack.Screen name="TelaTermos"         component={TelaTermos} />
+        <Stack.Screen name="TelaPrincipalProfissional" component={TelaPrincipalProfissional} />
+        <Stack.Screen name="TelaMenuProfissional"      component={TelaMenuProfissional} />
+        <Stack.Screen name="TelaAtividades"            component={TelaAtividadesDetalhada} />
         <Stack.Screen name="Tabs"              component={TabsNavigator} />
       </Stack.Navigator>
       <BotaoTesteFlutante />
     </>
   );
 }
-
 
 export default function App() {
   let [fontsLoaded] = useFonts({ Homenaje_400Regular });
@@ -160,9 +172,7 @@ export default function App() {
   );
 }
 
-
 const styles = StyleSheet.create({
-
   tabBar:{
     flexDirection:'row',
     backgroundColor:'#D9D9D9',
@@ -172,73 +182,49 @@ const styles = StyleSheet.create({
     paddingBottom:12,
     justifyContent:'center',
     position:'relative'
-},
+  },
   tabButton:{
     flex:1,
     alignItems:'center',
     justifyContent:'center',
     paddingTop:12
-},
-
+  },
   tabLabel: {
     fontSize: 11,
     color: '#444',
     marginTop:2,
     fontFamily:'Homenaje_400Regular'
   },
-
   tabLabelActive: {
     color: '#1565C0',
   },
-
   tabIndicator: {
     position: 'absolute',
-
     top:0,
-
     height:3,
-
     backgroundColor:'#1565C0',
-
     borderRadius:10,
   },
-
-
   botaoFlutuante:{
     position:'absolute',
-
     right:16,
-
     flexDirection:'row',
-
     alignItems:'center',
-
     backgroundColor:'#1565C0',
-
     paddingHorizontal:16,
     paddingVertical:10,
-
     borderRadius:30,
-
     elevation:6,
-
     shadowColor:"#000",
     shadowOpacity:0.25,
     shadowRadius:6,
-
-    shadowOffset:{
-      width:0,
-      height:3
-    },
-
+    shadowOffset:{ width:0, height:3 },
     zIndex:999
   },
-
   botaoFlutuanteTexto:{
     color:"#FFF",
     fontWeight:"700",
     fontSize:13,
     fontFamily:'Homenaje_400Regular'
   }
-
 });

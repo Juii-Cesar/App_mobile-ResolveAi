@@ -31,7 +31,7 @@ export default function TelaDadosPessoais({ navigation }) {
 
         <Button 
           title="Continuar" 
-          onPress={() => accountType==='cliente'?navigation.navigate('TelaQuaseLa'):null} 
+          onPress={() => accountType==='cliente'?navigation.navigate('TelaQuaseLa'): navigation.navigate('TelaEspecialidades')} 
         />
       </View>
     </SafeAreaView>
