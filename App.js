@@ -7,13 +7,15 @@ import {
   Animated,
   Dimensions,
 } from 'react-native';
-import { NavigationContainer, useNavigation } from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useFonts, Homenaje_400Regular } from '@expo-google-fonts/homenaje';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import TelaEnderecos from './src/screens/TelaEnderecos';
+import TelaCarteira  from './src/screens/TelaCarteira';
+import TelaMinhaConta from './src/screens/TelaMinhaConta';
 
 
 import { UserTypeProvider } from "./src/context/UserTypeContext";
@@ -108,24 +110,10 @@ function TabsNavigator() {
       <Tab.Screen name="Início"   component={TelaInicio} />
       <Tab.Screen name="Serviços" component={TelaServicos} />
       <Tab.Screen name="Conta"    component={TelaConta} />
-      <Tab.Screen name="TelaEnderecos" component={TelaEnderecos} />
+      <Tab.Screen name="TelaEnderecos"  component={TelaEnderecos} />
+      <Tab.Screen name="TelaCarteira"   component={TelaCarteira} />
+      <Tab.Screen name="TelaMinhaConta" component={TelaMinhaConta} />
     </Tab.Navigator>
-  );
-}
-
-function BotaoTesteFlutante() {
-  const navigation = useNavigation();
-  const insets = useSafeAreaInsets();
-
-  return (
-    <TouchableOpacity
-      style={[styles.botaoFlutuante, { bottom: 56 + insets.bottom + 12 }]}
-      onPress={() => navigation.navigate('Tabs')}
-      activeOpacity={0.8}
-    >
-      <Ionicons name="home-outline" size={15} color="#fff" style={{ marginRight: 6 }} />
-      <Text style={styles.botaoFlutuanteTexto}>Testar App</Text>
-    </TouchableOpacity>
   );
 }
 
@@ -133,8 +121,7 @@ const Stack = createNativeStackNavigator();
 
 function RootNavigator() {
   return (
-    <>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Abertura"          component={TelaAbertura} />
         <Stack.Screen name="Inicial"           component={TelaInicial} />
         <Stack.Screen name="Token"             component={TelaToken} />
@@ -152,8 +139,6 @@ function RootNavigator() {
         <Stack.Screen name="TelaAtividades"            component={TelaAtividadesDetalhada} />
         <Stack.Screen name="Tabs"              component={TabsNavigator} />
       </Stack.Navigator>
-      <BotaoTesteFlutante />
-    </>
   );
 }
 
@@ -205,26 +190,4 @@ const styles = StyleSheet.create({
     backgroundColor:'#1565C0',
     borderRadius:10,
   },
-  botaoFlutuante:{
-    position:'absolute',
-    right:16,
-    flexDirection:'row',
-    alignItems:'center',
-    backgroundColor:'#1565C0',
-    paddingHorizontal:16,
-    paddingVertical:10,
-    borderRadius:30,
-    elevation:6,
-    shadowColor:"#000",
-    shadowOpacity:0.25,
-    shadowRadius:6,
-    shadowOffset:{ width:0, height:3 },
-    zIndex:999
-  },
-  botaoFlutuanteTexto:{
-    color:"#FFF",
-    fontWeight:"700",
-    fontSize:13,
-    fontFamily:'Homenaje_400Regular'
-  }
 });

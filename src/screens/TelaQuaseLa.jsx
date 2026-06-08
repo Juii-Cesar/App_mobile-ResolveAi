@@ -44,9 +44,7 @@ export const TelaQuaseLa = () => {
 
         <Button
           title="Tirar foto"
-          onPress={() =>
-            accountType === "cliente" ? navigation.navigate("Token") : navigation.navigate("TelaDocumento")
-          }
+          onPress={() => navigation.navigate("Tabs")}
         />
       </View>
     </SafeAreaView>
@@ -108,6 +106,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#FFF",
     fontSize: 36,
-    fontFamily: "Homenaje_400Regular",
+    
   },
 });
