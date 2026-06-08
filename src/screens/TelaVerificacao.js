@@ -106,7 +106,7 @@ export default function TelaVerificacao({ navigation, route }) {
           title="Continuar" 
           onPress={() => {
             console.log('Cadastro do profissional concluído com sucesso!');
-            navigation.navigate('TelaPrincipalProfissional');
+            navigation.navigate("ProfissionalStack");
           }} 
           disabled={false} 
         />
