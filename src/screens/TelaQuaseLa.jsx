@@ -44,7 +44,10 @@ export const TelaQuaseLa = () => {
 
         <Button
           title="Tirar foto"
-          onPress={() => navigation.navigate("Tabs")}
+          onPress={() =>{
+            navigation.replace("Tabs")
+            console.log('replace aq');
+          }}
         />
       </View>
     </SafeAreaView>
