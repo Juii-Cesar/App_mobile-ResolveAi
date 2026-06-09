@@ -5,15 +5,16 @@ import { Ionicons } from '@expo/vector-icons';
 import LogoIcon from '../assets/icons/LogoIcon';
 import { Button } from '../components/Button';
 import IdentidadeIcon from '../components/Identidade';
+import { useRegistration } from "../context/RegistrationContext";
 
 const BLUE_COLOR = '#076BDE';
 
 export default function TelaDocumento({ navigation }) {
-  
+  const { formData } = useRegistration();
+
   const handleTirarFoto = () => {
-    console.log('Abrir câmera para o documento');
-    navigation.navigate('TelaVerificacao', { documentoConcluido: true });
-  };
+  navigation.navigate('TelaCameraDocumento');
+};
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
@@ -68,10 +69,7 @@ export default function TelaDocumento({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#DBDBDB' 
-  },
+  container: { flex: 1, backgroundColor: '#DBDBDB' },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -79,11 +77,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25,
     paddingTop: 15,
   },
-  scrollContent: { 
-    paddingHorizontal: 25, 
-    paddingTop: 20,
-    alignItems: 'center'
-  },
+  scrollContent: { paddingHorizontal: 25, paddingTop: 20, alignItems: 'center' },
   title: {
     fontFamily: 'Homenaje_400Regular',
     fontSize: 34,
@@ -100,11 +94,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginBottom: 10,
   },
-  instrucoesContainer: {
-    width: '100%',
-    gap: 8,
-    marginBottom: 20,
-  },
+  instrucoesContainer: { width: '100%', gap: 8, marginBottom: 20 },
   textoInstrucao: {
     fontFamily: 'Homenaje_400Regular',
     fontSize: 18,
@@ -127,9 +117,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 25,
   },
-  buttonContainer: {
-    width: '100%',
-    alignItems: 'center',
-    paddingBottom: 20,
-  }
+  buttonContainer: { width: '100%', alignItems: 'center', paddingBottom: 20 }
 });

@@ -4,10 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../components/Button';
+import { useRegistration } from "../context/RegistrationContext";
 
 const BLUE_COLOR = '#076BDE';
 
 export default function TelaFotoPerfil({ navigation }) {
+  const { updateFormData } = useRegistration();
   const [permission, requestPermission] = useCameraPermissions();
   const [foto, setFoto] = useState(null);
   const cameraRef = useRef(null);
@@ -46,7 +48,6 @@ export default function TelaFotoPerfil({ navigation }) {
       </View>
 
       <View style={styles.content}>
-
         <View style={styles.molduraContainer}>
           {!foto ? (
             <CameraView style={styles.camera} facing="front" ref={cameraRef}>
@@ -81,134 +82,133 @@ export default function TelaFotoPerfil({ navigation }) {
               <Button 
                 title="Confirmar" 
                 onPress={() => {
-                  console.log('Foto confirmada:', foto);
+                  updateFormData({ fotoPerfil: foto }); 
                   navigation.navigate('TelaVerificacao', { fotoConcluida: true });
                 }} 
-            />
+              />
             </View>
           )}
         </View>
-
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  containerEscuro: {
-    flex: 1,
-    backgroundColor: '#121212',
+  containerEscuro: { 
+    flex: 1, 
+    backgroundColor: '#121212' 
   },
-  containerAviso: {
-    flex: 1,
-    backgroundColor: '#121212',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 30,
+  containerAviso: { 
+    flex: 1, 
+    backgroundColor: '#121212', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    padding: 30 
   },
-  textoAviso: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 24,
-    color: '#FFF',
-    textAlign: 'center',
-    marginBottom: 20,
+  textoAviso: { 
+    fontFamily: 'Homenaje_400Regular', 
+    fontSize: 24, 
+    color: '#FFF', 
+    textAlign: 'center', 
+    marginBottom: 20 
   },
-  botaoPermissao: {
-    backgroundColor: BLUE_COLOR,
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 15,
+  botaoPermissao: { 
+    backgroundColor: BLUE_COLOR, 
+    paddingVertical: 12, 
+    paddingHorizontal: 25, 
+    borderRadius: 15 
   },
-  textoBotaoPermissao: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 22,
-    color: '#FFF',
+  textoBotaoPermissao: { 
+    fontFamily: 'Homenaje_400Regular', 
+    fontSize: 22, 
+    color: '#FFF' 
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 10,
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    paddingHorizontal: 20, 
+    paddingTop: 10 
   },
-  headerTitle: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 28,
-    color: '#FFF',
+  headerTitle: { 
+    fontFamily: 'Homenaje_400Regular', 
+    fontSize: 28, 
+    color: '#FFF' 
   },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingVertical: 20,
+  content: { 
+    flex: 1, 
+    alignItems: 'center', 
+    justifyContent: 'space-around', 
+    paddingVertical: 20 
   },
-  molduraContainer: {
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    borderWidth: 4,
-    borderColor: BLUE_COLOR,
-    overflow: 'hidden',
-    backgroundColor: '#000',
+  molduraContainer: { 
+    width: 280, 
+    height: 280, 
+    borderRadius: 140, 
+    borderWidth: 4, 
+    borderColor: BLUE_COLOR, 
+    overflow: 'hidden', 
+    backgroundColor: '#000' 
   },
-  camera: {
-    flex: 1,
+  camera: { 
+    flex: 1 
   },
-  mascaraCirculo: {
-    flex: 1,
-    backgroundColor: 'transparent',
+  mascaraCirculo: { 
+    flex: 1, 
+    backgroundColor: 'transparent' 
   },
-  previewFoto: {
-    flex: 1,
-    resizeMode: 'cover',
+  previewFoto: { 
+    flex: 1, 
+    resizeMode: 'cover' 
   },
-  instrucoesContainer: {
-    width: '80%',
-    gap: 8,
+  instrucoesContainer: { 
+    width: '80%', 
+    gap: 8 
   },
-  textoInstrucao: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 20,
-    color: '#D9DFE3',
+  textoInstrucao: { 
+    fontFamily: 'Homenaje_400Regular', 
+    fontSize: 20, 
+    color: '#D9DFE3' 
   },
-  textoSucesso: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 24,
-    color: '#FFF',
-    textAlign: 'center',
+  textoSucesso: { 
+    fontFamily: 'Homenaje_400Regular', 
+    fontSize: 24, 
+    color: '#FFF', 
+    textAlign: 'center' 
   },
-  actionContainer: {
-    width: '100%',
-    alignItems: 'center',
-    height: 110,
-    justifyContent: 'center',
+  actionContainer: { 
+    width: '100%', 
+    alignItems: 'center', 
+    height: 110, 
+    justifyContent: 'center' 
   },
-  botaoCapturar: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    borderWidth: 4,
-    borderColor: '#FFF',
-    justifyContent: 'center',
-    alignItems: 'center',
+  botaoCapturar: { 
+    width: 84, 
+    height: 84, 
+    borderRadius: 42, 
+    borderWidth: 4, 
+    borderColor: '#FFF', 
+    justifyContent: 'center', 
+    alignItems: 'center' 
   },
-  circuloInterno: {
-    width: 66,
-    height: 66,
-    borderRadius: 33,
-    backgroundColor: '#FFF',
+  circuloInterno: { 
+    width: 66, 
+    height: 66, 
+    borderRadius: 33, 
+    backgroundColor: '#FFF' 
   },
-  botoesConfirmacao: {
-    alignItems: 'center',
-    gap: 12,
+  botoesConfirmacao: { 
+    alignItems: 'center', 
+    gap: 12 
   },
-  botaoRefazer: {
-    paddingVertical: 5,
+  botaoRefazer: { 
+    paddingVertical: 5 
   },
-  textoRefazer: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 22,
-    color: '#FF4D4D',
-    textDecorationLine: 'underline',
+  textoRefazer: { 
+    fontFamily: 'Homenaje_400Regular', 
+    fontSize: 22, 
+    color: '#FF4D4D', 
+    textDecorationLine: 'underline' 
   },
 });

@@ -33,7 +33,7 @@ export default function TelaInicial({ navigation }) {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: emailLimpo,
-        password: 'A_SENHA_QUE_VOCE_CRIOU',
+        password: '12345678',
       });
 
       if (error) throw error;

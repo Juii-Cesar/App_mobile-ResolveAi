@@ -4,30 +4,47 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import LogoIcon from '../assets/icons/LogoIcon';
 import { Button } from '../components/Button';
+import { useRegistration } from "../context/RegistrationContext";
 
 const BLUE_COLOR = '#076BDE';
 const GRAY_LINE = '#CCCCCC';
 
 export default function TelaVerificacao({ navigation, route }) {
-  const [etapasConcluidas, setEtapasConcluidas] = useState([]);
+  const { formData } = useRegistration(); // 1. Acessando a mochila global
+
+  // Mantemos este state temporário apenas para as etapas que você AINDA NÃO 
+  // migrou para a mochila (como residência e termos), para não quebrar seu app.
+  const [etapasExtras, setEtapasExtras] = useState([]);
 
   useEffect(() => {
-  if (route.params?.fotoConcluida && !etapasConcluidas.includes('foto')) {
-    setEtapasConcluidas([...etapasConcluidas, 'foto']);
-  }
-  if (route.params?.documentoConcluido && !etapasConcluidas.includes('documento')) {
-    setEtapasConcluidas([...etapasConcluidas, 'documento']);
-  }
-  if (route.params?.residenciaConcluido && !etapasConcluidas.includes('residencia')) {
-    setEtapasConcluidas([...etapasConcluidas, 'residencia']);
-  }
-  if (route.params?.termosConcluidos && !etapasConcluidas.includes('termos')) {
-    setEtapasConcluidas([...etapasConcluidas, 'termos']);
-  }
-}, [route.params?.fotoConcluida, route.params?.documentoConcluido, route.params?.residenciaConcluido, route.params?.termosConcluidos]);
+    const novasEtapas = [...etapasExtras];
+    // Se ainda usar parâmetros de navegação para as outras telas, ele salva aqui:
+    if (route.params?.residenciaConcluido && !novasEtapas.includes('residencia')) novasEtapas.push('residencia');
+    if (route.params?.termosConcluidos && !novasEtapas.includes('termos')) novasEtapas.push('termos');
+    
+    // Fallback caso você pule a câmera e vá direto pelo botão antigo
+    if (route.params?.documentoConcluido && !novasEtapas.includes('documento')) novasEtapas.push('documento');
+    if (route.params?.fotoConcluida && !novasEtapas.includes('foto')) novasEtapas.push('foto');
+
+    if (novasEtapas.length > etapasExtras.length) {
+      setEtapasExtras(novasEtapas);
+    }
+  }, [route.params]);
+
+  // 2. A MÁGICA: Junta o que está na mochila com o que está no state temporário.
+  // Se "fotoPerfil" existir na mochila, a etapa 'foto' já conta como concluída.
+  // Se 'docFrente' e 'docVerso' existirem, a etapa 'documento' conta como concluída.
+  const etapasConcluidas = [
+    ...(formData.fotoPerfil ? ['foto'] : []),
+    ...(formData.docFrente && formData.docVerso ? ['documento'] : []),
+    ...etapasExtras
+  ];
+
+  // 3. Pega o primeiro nome para dar boas vindas
+  const primeiroNome = formData.nome ? formData.nome.split(' ')[0] : 'Visitante';
 
   const etapas = [
-    { id: 'foto', titulo: 'Foto de perfil', sub: 'Em un app de serviço, ver o rosto do profissional gera muita confiança para o cliente.', rota: 'TelaFotoPerfil' },
+    { id: 'foto', titulo: 'Foto de perfil', sub: 'Em um app de serviço, ver o rosto do profissional gera muita confiança para o cliente.', rota: 'TelaFotoPerfil' },
     { id: 'documento', titulo: 'Documento de Identidade (RG ou CNH)', sub: 'Obrigatório para validar quem é você.', rota: 'TelaDocumento' },
     { id: 'residencia', titulo: 'Comprovante de Residência', sub: 'Para confirmar sua área de atuação local.', rota: 'TelaResidencia' },
     { id: 'portfolio', titulo: 'Fotos de Serviços Anteriores (Opcional)', sub: 'Monte seu portfólio para se destacar.', rota: '' },
@@ -54,7 +71,9 @@ export default function TelaVerificacao({ navigation, route }) {
           <MaterialCommunityIcons name="wrench" size={28} color="#000" />
         </View>
 
-        <Text style={styles.welcomeText}>Olá, Jorgin</Text>
+        {/* Nome dinâmico aqui */}
+        <Text style={styles.welcomeText}>Olá, {primeiroNome}</Text>
+        
         <Text style={styles.instructionText}>
           Conclua as etapas abaixo para ativar seu perfil e começar a receber pedidos no seu bairro.
         </Text>
@@ -105,7 +124,7 @@ export default function TelaVerificacao({ navigation, route }) {
         <Button 
           title="Continuar" 
           onPress={() => {
-            console.log('Cadastro do profissional concluído com sucesso!');
+            console.log('Dados prontos para o banco:', formData);
             navigation.navigate("ProfissionalStack");
           }} 
           disabled={false} 
@@ -205,7 +224,6 @@ const styles = StyleSheet.create({
   checkIcon: { 
     marginLeft: 10 
 },
-  
   footer: { 
     paddingHorizontal: 25, 
     paddingVertical: 20, 
