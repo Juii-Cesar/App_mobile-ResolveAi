@@ -10,19 +10,14 @@ const BLUE_COLOR = '#076BDE';
 const GRAY_LINE = '#CCCCCC';
 
 export default function TelaVerificacao({ navigation, route }) {
-  const { formData } = useRegistration(); // 1. Acessando a mochila global
+  const { formData } = useRegistration();
 
-  // Mantemos este state temporário apenas para as etapas que você AINDA NÃO 
-  // migrou para a mochila (como residência e termos), para não quebrar seu app.
   const [etapasExtras, setEtapasExtras] = useState([]);
 
   useEffect(() => {
     const novasEtapas = [...etapasExtras];
-    // Se ainda usar parâmetros de navegação para as outras telas, ele salva aqui:
     if (route.params?.residenciaConcluido && !novasEtapas.includes('residencia')) novasEtapas.push('residencia');
     if (route.params?.termosConcluidos && !novasEtapas.includes('termos')) novasEtapas.push('termos');
-    
-    // Fallback caso você pule a câmera e vá direto pelo botão antigo
     if (route.params?.documentoConcluido && !novasEtapas.includes('documento')) novasEtapas.push('documento');
     if (route.params?.fotoConcluida && !novasEtapas.includes('foto')) novasEtapas.push('foto');
 
@@ -31,16 +26,12 @@ export default function TelaVerificacao({ navigation, route }) {
     }
   }, [route.params]);
 
-  // 2. A MÁGICA: Junta o que está na mochila com o que está no state temporário.
-  // Se "fotoPerfil" existir na mochila, a etapa 'foto' já conta como concluída.
-  // Se 'docFrente' e 'docVerso' existirem, a etapa 'documento' conta como concluída.
   const etapasConcluidas = [
     ...(formData.fotoPerfil ? ['foto'] : []),
     ...(formData.docFrente && formData.docVerso ? ['documento'] : []),
     ...etapasExtras
   ];
 
-  // 3. Pega o primeiro nome para dar boas vindas
   const primeiroNome = formData.nome ? formData.nome.split(' ')[0] : 'Visitante';
 
   const etapas = [
@@ -71,7 +62,6 @@ export default function TelaVerificacao({ navigation, route }) {
           <MaterialCommunityIcons name="wrench" size={28} color="#000" />
         </View>
 
-        {/* Nome dinâmico aqui */}
         <Text style={styles.welcomeText}>Olá, {primeiroNome}</Text>
         
         <Text style={styles.instructionText}>
