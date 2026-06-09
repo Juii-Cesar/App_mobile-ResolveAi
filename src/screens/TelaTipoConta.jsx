@@ -6,7 +6,6 @@ import { SelectButton } from "../components/SelectButton";
 import { useUserType } from "../context/UserTypeContext";
 
 export default function TelaTipoConta({ navigation }) {
-  // const [accountType, setAccountType] = useState("profissional");
   const { accountType,setAccountType } = useUserType();
   const content = {
     profissional: {

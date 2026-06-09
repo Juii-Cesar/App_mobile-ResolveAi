@@ -1,37 +1,29 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useFonts, Homenaje_400Regular } from '@expo-google-fonts/homenaje';
-
-import { UserTypeProvider } from "./src/context/UserTypeContext"; 
-
-import TelaAbertura from './src/screens/TelaAbertura';
-import TelaInicial from './src/screens/TelaInicial';
-import TelaToken from './src/screens/TelaToken';
-import TelaTipoConta from './src/screens/TelaTipoConta';
-import TelaDadosPessoais from './src/screens/TelaDadosPessoais';
-
-const Stack = createNativeStackNavigator();
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { UserTypeProvider } from "./src/context/UserTypeContext";
+import { AuthStack } from './src/navigation/AuthStack';
+import { RegistrationProvider } from './src/context/RegistrationContext';
 
 export default function App() {
-  let [fontsLoaded] = useFonts({ Homenaje_400Regular });
+  const [fontsLoaded] = useFonts({
+    Homenaje_400Regular,
+  });
 
-  if (!fontsLoaded) return null; 
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
-    <UserTypeProvider>
-      <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Abertura" component={TelaAbertura} />
-          <Stack.Screen name="Inicial" component={TelaInicial} />
-          <Stack.Screen name="Token" component={TelaToken} />
-          <Stack.Screen name="TelaTipoConta" component={TelaTipoConta} />
-          <Stack.Screen
-            name="TelaDadosPessoais"
-            component={TelaDadosPessoais}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </UserTypeProvider>
+    <RegistrationProvider> 
+      <SafeAreaProvider>
+        <UserTypeProvider>
+          <NavigationContainer>
+            <AuthStack /> 
+          </NavigationContainer>
+        </UserTypeProvider>
+      </SafeAreaProvider>
+    </RegistrationProvider>
   );
 }
