@@ -62,6 +62,22 @@ export default function TelaVerificacao({ navigation, route }) {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) throw new Error("Usuário não autenticado. Faça login novamente.");
 
+      const nomeCompleto = formData.nome ? `${formData.nome} ${formData.sobrenome || ''}`.trim() : 'Profissional';
+      
+      const { error: erroUsuario } = await supabase
+        .from('usuarios')
+        .upsert({
+          id: user.id,
+          nome: nomeCompleto,
+          cpf: formData.cpf,
+          tipo: 'profissional',
+          statuscadastro: 'pendente'
+        });
+
+      if (erroUsuario) {
+        throw new Error("Erro ao criar usuário no banco: " + erroUsuario.message);
+      }
+
       const uploadFile = async (uri, bucket, prefix) => {
         if (!uri) return null;
 
@@ -118,16 +134,11 @@ export default function TelaVerificacao({ navigation, route }) {
         throw new Error("Erro DB: " + dbError.message);
       }
 
-      await supabase
-        .from('usuarios')
-        .update({ statuscadastro: 'pendente' })
-        .eq('id', user.id);
-
       navigation.navigate("ProfissionalStack");
 
     } catch (error) {
       console.error("Erro no upload: ", error);
-      Alert.alert("Erro", "Ocorreu um problema ao enviar seus arquivos. Verifique sua conexão e tente novamente.");
+      Alert.alert("Erro", "Ocorreu um problema ao finalizar seu cadastro. " + error.message);
     } finally {
       setIsLoading(false);
     }
@@ -243,7 +254,7 @@ const styles = StyleSheet.create({
   },
   highlightText: { 
     fontFamily: 'Homenaje_400Regular', 
-    ontSize: 36, 
+    fontSize: 36, 
     color: '#000' 
   },
   welcomeText: { 

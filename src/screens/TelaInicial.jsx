@@ -42,7 +42,7 @@ export default function TelaInicial({ navigation }) {
 
       setModalVisivel(false);
 
-      navigation.navigate('TelaToken', { emailUsuario: emailLimpo });
+      navigation.navigate('Token', { emailUsuario: emailLimpo });
 
     } catch (error) {
       Alert.alert('Erro', error.message || 'Não foi possível enviar o código.');
