@@ -173,5 +173,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 25,
   },
-  buttonContainer: { width: '100%', alignItems: 'center', paddingBottom: 20 }
+  buttonContainer: { 
+    width: '100%', 
+    alignItems: 'center', 
+    paddingBottom: 20 
+  }
 });

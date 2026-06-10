@@ -11,10 +11,13 @@ import TelaFotoPerfil from "../screens/TelaFotoPerfil";
 import TelaDocumento from "../screens/TelaDocumento";
 import TelaResidencia from "../screens/TelaResidencia";
 import TelaTermos from "../screens/TelaTermos";
+import TelaCameraDocumento from '../screens/TelaCameraDocumento';
+import TelaPortifolio from '../screens/TelaPortifolio';
+import TelaTextoTermos from '../screens/TelaTextoTermos';
 import { TelaQuaseLa } from "../screens/TelaQuaseLa";
 import { ClienteTabs } from "./ClienteTabs";
 import { ProfissionalStack } from "./ProfissionalStack";
-import TelaCameraDocumento from '../screens/TelaCameraDocumento';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -45,6 +48,10 @@ export function AuthStack() {
       <Stack.Screen name="TelaTermos" component={TelaTermos} />
 
       <Stack.Screen name="TelaQuaseLa" component={TelaQuaseLa} />
+
+      <Stack.Screen name="TelaPortifolio" component={TelaPortifolio} />
+
+      <Stack.Screen name="TelaTextoTermos" component={TelaTextoTermos} />
 
       {/* Área do cliente */}
       <Stack.Screen name="Tabs" component={ClienteTabs} />

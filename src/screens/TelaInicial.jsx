@@ -31,21 +31,21 @@ export default function TelaInicial({ navigation }) {
     setCarregando(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithOtp({
         email: emailLimpo,
-        password: '12345678',
+        options: {
+          shouldCreateUser: true, 
+        },
       });
 
       if (error) throw error;
 
-      console.log('Sessão validada com sucesso!', data.session);
-
       setModalVisivel(false);
 
-      navigation.navigate('TelaTipoConta');
+      navigation.navigate('TelaToken', { emailUsuario: emailLimpo });
 
     } catch (error) {
-      Alert.alert('Erro de Autenticação', error.message || 'Não foi possível fazer o login.');
+      Alert.alert('Erro', error.message || 'Não foi possível enviar o código.');
     } finally {
       setCarregando(false);
     }
