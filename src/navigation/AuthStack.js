@@ -11,13 +11,11 @@ import TelaFotoPerfil from "../screens/TelaFotoPerfil";
 import TelaDocumento from "../screens/TelaDocumento";
 import TelaResidencia from "../screens/TelaResidencia";
 import TelaTermos from "../screens/TelaTermos";
-
 import TelaCameraDocumento from '../screens/TelaCameraDocumento';
 import TelaPortifolio from '../screens/TelaPortifolio';
 import TelaTextoTermos from '../screens/TelaTextoTermos';
 import { TelaQuaseLa } from "../screens/TelaQuaseLa";
 import { ClienteTabs } from "./ClienteTabs";
-import { ProfissionalStack } from "./ProfissionalStack";
 import { ProfissionalStack } from "./ProfissionalStack";
 import TelaInformarProblema from "../screens/TelaInformarProblema";
 import TelaBuscarProfissional from "../screens/TelaBuscarProfissional";
@@ -66,7 +64,7 @@ export function AuthStack() {
       {/* Área da Camera RG */}
       <Stack.Screen name="TelaCameraDocumento" component={TelaCameraDocumento} />
 
-      {/* ── NOVAS TELAS DO FLUXO DE BUSCA AQUI JUI CEZA─────────────────────────────────── */}
+      {/* ── NOVAS TELAS DO FLUXO DE BUSCA AQUI JUI CEZA */}
       <Stack.Screen name="TelaInformarProblema" component={TelaInformarProblema} />
 
       <Stack.Screen name="TelaBuscarProfissional" component={TelaBuscarProfissional} />
