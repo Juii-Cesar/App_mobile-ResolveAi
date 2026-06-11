@@ -71,7 +71,7 @@ export default function TelaMinhaConta() {
     <SafeAreaView style={styles.safeArea} edges={['top']}>
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate('Conta')} style={styles.botaoVoltar}>
+        <TouchableOpacity onPress={() => navigation.navigate('TelaConta')} style={styles.botaoVoltar}>
           <Ionicons name="chevron-back" size={22} color="#1565C0" />
         </TouchableOpacity>
       </View>

@@ -72,32 +72,34 @@ function CustomTabBar({ state, navigation }) {
         ]}
       />
 
-      {state.routes.map((route, index) => {
-        const tab = tabs[index];
+      <View style={styles.tabButtonsRow}>
+        {state.routes.map((route, index) => {
+          const tab = tabs[index];
 
-        if (!tab) return null;
+          if (!tab) return null;
 
-        const isFocused = state.index === index;
+          const isFocused = state.index === index;
 
-        return (
-          <TouchableOpacity
-            key={route.key}
-            style={styles.tabButton}
-            activeOpacity={0.8}
-            onPress={() => navigation.navigate(route.name)}
-          >
-            <Ionicons
-              name={isFocused ? tab.iconActive : tab.icon}
-              size={22}
-              color={isFocused ? "#1565C0" : "#555"}
-            />
+          return (
+            <TouchableOpacity
+              key={route.key}
+              style={styles.tabButton}
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate(route.name)}
+            >
+              <Ionicons
+                name={isFocused ? tab.iconActive : tab.icon}
+                size={22}
+                color={isFocused ? "#1565C0" : "#555"}
+              />
 
-            <Text style={[styles.tabLabel, isFocused && styles.tabLabelActive]}>
-              {tab.name}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
+              <Text style={[styles.tabLabel, isFocused && styles.tabLabelActive]}>
+                {tab.name}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -123,14 +125,16 @@ export function ClienteTabs() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    flexDirection: "row",
     backgroundColor: "#D9D9D9",
     borderTopWidth: 1,
     borderTopColor: "#AAA",
     height: 86,
+  },
+
+  tabButtonsRow: {
+    flexDirection: "row",
+    flex: 1,
     paddingBottom: 12,
-    justifyContent: "center",
-    position: "relative",
   },
 
   tabButton: {
@@ -153,6 +157,7 @@ const styles = StyleSheet.create({
   tabIndicator: {
     position: "absolute",
     top: 0,
+    left: 0,
     height: 3,
     backgroundColor: "#1565C0",
     borderRadius: 10,
