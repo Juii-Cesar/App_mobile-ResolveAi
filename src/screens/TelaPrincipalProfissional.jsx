@@ -2,16 +2,46 @@ import React, { useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ImageBackground } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, Feather } from '@expo/vector-icons';
+import ModalServicoEncontrado from './ModalServicoEncontrado';
 
 const BLUE_COLOR = '#076BDE';
 
+// Dados simulados do cliente — substituir por dados reais do backend
+const DADOS_SIMULADOS = {
+  nomeCliente: 'Serviço de\nCliente',
+  servico: 'Serviço como profissão',
+};
+
 export default function TelaPrincipalProfissional({ navigation }) {
   const [mostrandoFiltros, setMostrandoFiltros] = useState(false);
+  const [online, setOnline] = useState(false);
+  const [modalVisivel, setModalVisivel] = useState(false);
+
+  function handleIniciar() {
+    setOnline(true);
+    // Simula chegada de serviço após 2s — substituir por listener do backend
+    setTimeout(() => {
+      setModalVisivel(true);
+    }, 2000);
+  }
+
+  function handleAceitar() {
+    setModalVisivel(false);
+    navigation.navigate('TelaChatProfissional', {
+      profissionalNome: 'Nome Profissional',
+      dadosServico: DADOS_SIMULADOS,
+    });
+  }
+
+  function handleRecusar() {
+    setModalVisivel(false);
+    setOnline(false);
+  }
 
   return (
     <View style={styles.container}>
-      <ImageBackground 
-        source={{ uri: 'https://i.imgur.com/vH1Wb7I.png' }} 
+      <ImageBackground
+        source={{ uri: 'https://i.imgur.com/vH1Wb7I.png' }}
         style={styles.mapaFundo}
         resizeMode="cover"
       >
@@ -28,19 +58,22 @@ export default function TelaPrincipalProfissional({ navigation }) {
           </View>
 
           <View style={[
-            styles.abaStatusContainer, 
+            styles.abaStatusContainer,
             mostrandoFiltros ? styles.abaFiltroAberta : styles.abaStatusFechada
           ]}>
             <View style={styles.tracoArrastar} />
 
             {!mostrandoFiltros ? (
               <Text style={styles.textoStatus}>
-                Você está <Text style={styles.offlineHighlight}>offline</Text>
+                Você está{' '}
+                <Text style={online ? styles.onlineHighlight : styles.offlineHighlight}>
+                  {online ? 'online' : 'offline'}
+                </Text>
               </Text>
             ) : (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.selectFiltro}
-                onPress={() => console.log('Abrir opções de como deseja atuar (Mais para frente)')}
+                onPress={() => console.log('Abrir opções')}
               >
                 <Text style={styles.textoSelect}>Como deseja atuar ?</Text>
                 <Ionicons name="triangle" size={18} color="#A0A0A0" style={styles.setaSelect} />
@@ -48,18 +81,20 @@ export default function TelaPrincipalProfissional({ navigation }) {
             )}
 
             <View style={styles.rodapeAba}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setMostrandoFiltros(!mostrandoFiltros)}
                 style={[mostrandoFiltros && styles.abaBotaoAtivo]}
               >
                 <Feather name="sliders" size={28} color="#000" />
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={styles.botaoIniciar} 
-                onPress={() => console.log('Ficar online e buscar serviços!')}
+              <TouchableOpacity
+                style={[styles.botaoIniciar, online && styles.botaoIniciarOnline]}
+                onPress={online ? () => setOnline(false) : handleIniciar}
               >
-                <Text style={styles.textoBotaoIniciar}>Iniciar</Text>
+                <Text style={styles.textoBotaoIniciar}>
+                  {online ? 'Parar' : 'Iniciar'}
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity onPress={() => navigation.navigate('TelaMenuProfissional')}>
@@ -70,6 +105,14 @@ export default function TelaPrincipalProfissional({ navigation }) {
 
         </SafeAreaView>
       </ImageBackground>
+
+      {/* Modal de serviço encontrado */}
+      <ModalServicoEncontrado
+        visivel={modalVisivel}
+        dados={DADOS_SIMULADOS}
+        onAceitar={handleAceitar}
+        onRecusar={handleRecusar}
+      />
     </View>
   );
 }
@@ -143,6 +186,9 @@ const styles = StyleSheet.create({
   offlineHighlight: {
     color: '#7A8A9E',
   },
+  onlineHighlight: {
+    color: '#388E3C',
+  },
   selectFiltro: {
     flexDirection: 'row',
     backgroundColor: '#D1D7DC',
@@ -182,6 +228,9 @@ const styles = StyleSheet.create({
     borderColor: '#000',
     elevation: 4,
   },
+  botaoIniciarOnline: {
+    backgroundColor: '#388E3C',
+  },
   textoBotaoIniciar: {
     fontFamily: 'Homenaje_400Regular',
     fontSize: 26,
@@ -189,5 +238,5 @@ const styles = StyleSheet.create({
   },
   abaBotaoAtivo: {
     opacity: 0.5,
-  }
+  },
 });
