@@ -50,12 +50,7 @@ export default function TelaTipoConta({ navigation }) {
           title="Continuar" 
           onPress={() => {
             console.log("Tipo de conta selecionada:", accountType);
-
-            if (accountType === 'cliente') {
-              navigation.navigate('TelaDadosCliente');
-            } else if (accountType === 'profissional') {
-              navigation.navigate('TelaDadosPessoais');
-            }
+            navigation.navigate('TelaDadosPessoais');
           }} 
         />
       </View>
