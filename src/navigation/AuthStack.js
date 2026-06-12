@@ -1,6 +1,5 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-import TelaAbertura from "../screens/TelaAbertura";
 import TelaInicial from "../screens/TelaInicial";
 import TelaToken from "../screens/TelaToken";
 import TelaTipoConta from "../screens/TelaTipoConta";
@@ -28,7 +27,6 @@ export function AuthStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {/* Fluxo de autenticação e cadastro */}
-      <Stack.Screen name="Abertura" component={TelaAbertura} />
 
       <Stack.Screen name="Inicial" component={TelaInicial} />
 
