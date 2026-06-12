@@ -49,9 +49,13 @@ export default function TelaTipoConta({ navigation }) {
         <Button 
           title="Continuar" 
           onPress={() => {
-            console.log(accountType);
-            
-            navigation.navigate('TelaDadosPessoais');
+            console.log("Tipo de conta selecionada:", accountType);
+
+            if (accountType === 'cliente') {
+              navigation.navigate('TelaDadosCliente');
+            } else if (accountType === 'profissional') {
+              navigation.navigate('TelaDadosPessoais');
+            }
           }} 
         />
       </View>

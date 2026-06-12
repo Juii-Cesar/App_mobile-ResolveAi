@@ -34,7 +34,6 @@ export default function TelaInicio({ navigation }) {
 
       <ScrollView showsVerticalScrollIndicator={false}>
 
-
         <TouchableOpacity
           style={styles.search}
           onPress={() => abrirBusca()}
@@ -56,7 +55,6 @@ export default function TelaInicio({ navigation }) {
           ))}
         </View>
 
-  
         {[1, 2, 3, 4, 5].map((item) => (
           <TouchableOpacity
             key={item}
@@ -76,7 +74,6 @@ export default function TelaInicio({ navigation }) {
         ))}
 
       </ScrollView>
-
     </SafeAreaView>
   );
 }

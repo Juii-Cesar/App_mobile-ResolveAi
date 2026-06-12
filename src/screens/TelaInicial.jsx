@@ -5,7 +5,7 @@ import { supabase } from '../services/supabase';
 // import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 const BLUE_COLOR = '#076BDE';
-const BG_GRAY = '#DBDBDB'; 
+const BG_GRAY = '#DBDBDB';
 const WHITE_COLOR = '#FFFFFF';
 const MODAL_BG = '#F1F4F6';
 
