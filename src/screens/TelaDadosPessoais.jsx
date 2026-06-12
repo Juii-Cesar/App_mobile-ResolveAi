@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, Alert } from 'react-native';
+import { StyleSheet, View, Text, TextInput, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context'; 
 import LogoIcon from '../assets/icons/LogoIcon'; 
 import { Button } from '../components/Button';
@@ -54,53 +54,98 @@ export default function TelaDadosPessoais({ navigation }) {
   };
 
   const handleContinuar = () => {
-    if (!validarCPF(cpf)) {
-      Alert.alert("Atenção", "Por favor, insira um CPF válido.");
+    if (!nome.trim() || !sobrenome.trim() || !dataNasc.trim() || !cpf.trim()) {
+      Alert.alert("Atenção", "Por favor, preencha todos os campos antes de continuar.");
       return;
     }
 
-    updateFormData({ nome, sobrenome, dataNasc, cpf });
+    if (nome.trim().length < 2 || sobrenome.trim().length < 2) {
+      Alert.alert("Atenção", "Por favor, insira um nome e sobrenome válidos.");
+      return;
+    }
 
-    accountType === 'cliente' ? navigation.navigate('TelaQuaseLa') : navigation.navigate('TelaEspecialidades');
+    if (dataNasc.length < 10) {
+      Alert.alert("Atenção", "Por favor, insira uma data de nascimento completa (DD/MM/AAAA).");
+      return;
+    }
+
+    if (!validarCPF(cpf)) {
+      Alert.alert("Atenção", "O CPF inserido não é válido. Por favor, verifique e tente novamente.");
+      return;
+    }
+
+    updateFormData({ 
+      nome: nome.trim(), 
+      sobrenome: sobrenome.trim(), 
+      dataNasc, 
+      cpf 
+    });
+
+    if (accountType === 'cliente') {
+      navigation.navigate('TelaQuaseLa'); 
+    } else {
+      navigation.navigate('TelaEspecialidades');
+    }
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-      <View style={styles.header}>
-        <SafeAreaView edges={['top']} />
-        <View style={styles.logoContainer}>
-          <LogoIcon width={70} height={70} fill="#FFFFFF" />
-        </View>
-      </View>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} bounces={false}>
+          <View style={styles.header}>
+            <SafeAreaView edges={['top']} />
+            <View style={styles.logoContainer}>
+              <LogoIcon width={70} height={70} fill="#FFFFFF" />
+            </View>
+          </View>
 
-      <View style={styles.content}>
-        <Text style={styles.title}>Conte-nos mais{"\n"}sobre você</Text>
+          <View style={styles.content}>
+            <Text style={styles.title}>Conte-nos mais{"\n"}sobre você</Text>
 
-        <View style={styles.inputGroup}>
-          <TextInput style={styles.input} placeholder="Nome" placeholderTextColor="#666" value={nome} onChangeText={setNome} />
-          <TextInput style={styles.input} placeholder="Sobrenome" placeholderTextColor="#666" value={sobrenome} onChangeText={setSobrenome} />
-          <TextInput 
-            style={styles.input} 
-            placeholder="Data de nascimento" 
-            placeholderTextColor="#666" 
-            keyboardType="numeric" 
-            value={dataNasc} 
-            onChangeText={(t) => setDataNasc(formatarData(t))}
-            maxLength={10}
-          />
-          <TextInput 
-            style={styles.input} 
-            placeholder="CPF" 
-            placeholderTextColor="#666" 
-            keyboardType="numeric" 
-            value={cpf} 
-            onChangeText={(t) => setCpf(formatarCPF(t))}
-            maxLength={14}
-          />
-        </View>
+            <View style={styles.inputGroup}>
+              <TextInput 
+                style={styles.input} 
+                placeholder="Nome" 
+                placeholderTextColor="#666" 
+                value={nome} 
+                onChangeText={setNome} 
+                autoCapitalize="words"
+              />
+              <TextInput 
+                style={styles.input} 
+                placeholder="Sobrenome" 
+                placeholderTextColor="#666" 
+                value={sobrenome} 
+                onChangeText={setSobrenome} 
+                autoCapitalize="words"
+              />
+              <TextInput 
+                style={styles.input} 
+                placeholder="Data de nascimento" 
+                placeholderTextColor="#666" 
+                keyboardType="numeric" 
+                value={dataNasc} 
+                onChangeText={(t) => setDataNasc(formatarData(t))}
+                maxLength={10}
+              />
+              <TextInput 
+                style={styles.input} 
+                placeholder="CPF" 
+                placeholderTextColor="#666" 
+                keyboardType="numeric" 
+                value={cpf} 
+                onChangeText={(t) => setCpf(formatarCPF(t))}
+                maxLength={14}
+              />
+            </View>
 
-        <Button title="Continuar" onPress={handleContinuar} />
-      </View>
+            <Button title="Continuar" onPress={handleContinuar} />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

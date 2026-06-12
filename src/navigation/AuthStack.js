@@ -59,6 +59,7 @@ export function AuthStack() {
 
       {/* Área do profissional */}
       <Stack.Screen name="ProfissionalStack" component={ProfissionalStack} />
+      
       {/* Área da Camera RG */}
       <Stack.Screen name="TelaCameraDocumento" component={TelaCameraDocumento} />
 
