@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import LogoIcon from '../assets/icons/LogoIcon';
 import { Button } from '../components/Button';
+import { logout } from "../services/auth";
 
 const BLUE_COLOR = '#076BDE';
 const CARD_BG = '#EAEAEA';
@@ -144,7 +145,7 @@ export default function TelaMenuProfissional({ navigation }) {
                   <Text style={styles.itemEspecialidade}>Dados Bancários / Pix</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.opcoesConfigItem, { borderBottomWidth: 0 }]} onPress={() => console.log('Mock: Fazer Logout')}>
+                <TouchableOpacity style={[styles.opcoesConfigItem, { borderBottomWidth: 0 }]} onPress={async () => logout()}>
                   <Text style={[styles.itemEspecialidade, { color: '#DE0707' }]}>Sair da conta</Text>
                 </TouchableOpacity>
               </View>

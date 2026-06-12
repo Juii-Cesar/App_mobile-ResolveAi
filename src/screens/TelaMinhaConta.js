@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
+import { logout } from "../services/auth";
 
 export default function TelaMinhaConta() {
   const navigation = useNavigation();
@@ -56,7 +57,7 @@ export default function TelaMinhaConta() {
   function sair() {
     Alert.alert('Sair', 'Deseja sair da sua conta?', [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', style: 'destructive', onPress: () => navigation.navigate('Abertura') },
+      { text: 'Sair', style: 'destructive', onPress: async () => await logout() },
     ]);
   }
 
