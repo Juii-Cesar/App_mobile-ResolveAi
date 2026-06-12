@@ -80,7 +80,7 @@ export function RootNavigator() {
     return <TelaAbertura />;
   }
 
-  if (!session) {
+  if (!session || !tipoUsuario) {
     return <AuthStack />;
   }
 
@@ -88,5 +88,9 @@ export function RootNavigator() {
     return <ProfissionalStack />;
   }
 
-  return <ClienteTabs />;
+  if (tipoUsuario === "cliente") {
+    return <ClienteTabs />;
+  }
+
+  return <AuthStack />;
 }
