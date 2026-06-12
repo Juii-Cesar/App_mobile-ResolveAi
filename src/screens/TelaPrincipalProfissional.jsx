@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ImageBackground } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, Feather } from '@expo/vector-icons';
+import MapView, { Marker } from 'react-native-maps';
+import * as Location from 'expo-location';
 import ModalServicoEncontrado from './ModalServicoEncontrado';
 
 const BLUE_COLOR = '#076BDE';
 
-// Dados simulados do cliente — substituir por dados reais do backend
 const DADOS_SIMULADOS = {
   nomeCliente: 'Serviço de\nCliente',
   servico: 'Serviço como profissão',
@@ -16,10 +17,38 @@ export default function TelaPrincipalProfissional({ navigation }) {
   const [mostrandoFiltros, setMostrandoFiltros] = useState(false);
   const [online, setOnline] = useState(false);
   const [modalVisivel, setModalVisivel] = useState(false);
+  
+  const [location, setLocation] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Aviso', 'Precisamos da sua localização para o mapa funcionar.');
+        return;
+      }
+
+      let locationSubscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          timeInterval: 5000,
+          distanceInterval: 10,
+        },
+        (newLocation) => {
+          setLocation(newLocation.coords);
+        }
+      );
+
+      return () => {
+        if (locationSubscription) {
+          locationSubscription.remove();
+        }
+      };
+    })();
+  }, []);
 
   function handleIniciar() {
     setOnline(true);
-    // Simula chegada de serviço após 2s — substituir por listener do backend
     setTimeout(() => {
       setModalVisivel(true);
     }, 2000);
@@ -38,75 +67,87 @@ export default function TelaPrincipalProfissional({ navigation }) {
     setOnline(false);
   }
 
+  const regiaoInicial = {
+    latitude: location ? location.latitude : -22.9022,
+    longitude: location ? location.longitude : -43.5587,
+    latitudeDelta: 0.05,
+    longitudeDelta: 0.05,
+  };
+
   return (
     <View style={styles.container}>
-      <ImageBackground
-        source={{ uri: 'https://i.imgur.com/vH1Wb7I.png' }}
-        style={styles.mapaFundo}
-        resizeMode="cover"
+      <MapView 
+        style={StyleSheet.absoluteFillObject} 
+        region={regiaoInicial}
+        showsUserLocation={true}
+        showsMyLocationButton={false}
       >
-        <SafeAreaView style={styles.safeArea}>
+        {location && online && (
+          <Marker 
+            coordinate={{ latitude: location.latitude, longitude: location.longitude }}
+            title="Você está aqui"
+            description="Aguardando serviços..."
+          />
+        )}
+      </MapView>
 
-          <View style={styles.headerFlutuante}>
-            <TouchableOpacity style={styles.botaoFlutuanteRedondo} onPress={() => console.log('Home pressionado')}>
-              <Ionicons name="home-outline" size={26} color="#FFF" />
-            </TouchableOpacity>
+      <SafeAreaView style={styles.safeArea} pointerEvents="box-none">
 
-            <TouchableOpacity style={styles.botaoFlutuanteRedondo} onPress={() => console.log('Busca pressionada')}>
-              <Ionicons name="search-outline" size={26} color="#FFF" />
-            </TouchableOpacity>
-          </View>
+        <View style={styles.headerFlutuante} pointerEvents="box-none">
+          <View style={{ flex: 1 }} /> 
+          <TouchableOpacity style={styles.botaoFlutuanteRedondo} onPress={() => console.log('Busca pressionada')}>
+            <Ionicons name="search-outline" size={26} color="#FFF" />
+          </TouchableOpacity>
+        </View>
 
-          <View style={[
-            styles.abaStatusContainer,
-            mostrandoFiltros ? styles.abaFiltroAberta : styles.abaStatusFechada
-          ]}>
-            <View style={styles.tracoArrastar} />
+        <View style={[
+          styles.abaStatusContainer,
+          mostrandoFiltros ? styles.abaFiltroAberta : styles.abaStatusFechada
+        ]}>
+          <View style={styles.tracoArrastar} />
 
-            {!mostrandoFiltros ? (
-              <Text style={styles.textoStatus}>
-                Você está{' '}
-                <Text style={online ? styles.onlineHighlight : styles.offlineHighlight}>
-                  {online ? 'online' : 'offline'}
-                </Text>
+          {!mostrandoFiltros ? (
+            <Text style={styles.textoStatus}>
+              Você está{' '}
+              <Text style={online ? styles.onlineHighlight : styles.offlineHighlight}>
+                {online ? 'online' : 'offline'}
               </Text>
-            ) : (
-              <TouchableOpacity
-                style={styles.selectFiltro}
-                onPress={() => console.log('Abrir opções')}
-              >
-                <Text style={styles.textoSelect}>Como deseja atuar ?</Text>
-                <Ionicons name="triangle" size={18} color="#A0A0A0" style={styles.setaSelect} />
-              </TouchableOpacity>
-            )}
+            </Text>
+          ) : (
+            <TouchableOpacity
+              style={styles.selectFiltro}
+              onPress={() => console.log('Abrir opções')}
+            >
+              <Text style={styles.textoSelect}>Como deseja atuar?</Text>
+              <Ionicons name="triangle" size={18} color="#A0A0A0" style={styles.setaSelect} />
+            </TouchableOpacity>
+          )}
 
-            <View style={styles.rodapeAba}>
-              <TouchableOpacity
-                onPress={() => setMostrandoFiltros(!mostrandoFiltros)}
-                style={[mostrandoFiltros && styles.abaBotaoAtivo]}
-              >
-                <Feather name="sliders" size={28} color="#000" />
-              </TouchableOpacity>
+          <View style={styles.rodapeAba}>
+            <TouchableOpacity
+              onPress={() => setMostrandoFiltros(!mostrandoFiltros)}
+              style={[mostrandoFiltros && styles.abaBotaoAtivo]}
+            >
+              <Feather name="sliders" size={28} color="#000" />
+            </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.botaoIniciar, online && styles.botaoIniciarOnline]}
-                onPress={online ? () => setOnline(false) : handleIniciar}
-              >
-                <Text style={styles.textoBotaoIniciar}>
-                  {online ? 'Parar' : 'Iniciar'}
-                </Text>
-              </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.botaoIniciar, online && styles.botaoIniciarOnline]}
+              onPress={online ? () => setOnline(false) : handleIniciar}
+            >
+              <Text style={styles.textoBotaoIniciar}>
+                {online ? 'Parar' : 'Iniciar'}
+              </Text>
+            </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => navigation.navigate('TelaMenuProfissional')}>
-                <Ionicons name="menu" size={32} color="#000" />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity onPress={() => navigation.navigate('TelaMenuProfissional')}>
+              <Ionicons name="menu" size={32} color="#000" />
+            </TouchableOpacity>
           </View>
+        </View>
 
-        </SafeAreaView>
-      </ImageBackground>
+      </SafeAreaView>
 
-      {/* Modal de serviço encontrado */}
       <ModalServicoEncontrado
         visivel={modalVisivel}
         dados={DADOS_SIMULADOS}
@@ -122,18 +163,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#DBDBDB',
   },
-  mapaFundo: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
   safeArea: {
     flex: 1,
     justifyContent: 'space-between',
   },
   headerFlutuante: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     paddingHorizontal: 20,
     paddingTop: 10,
   },
