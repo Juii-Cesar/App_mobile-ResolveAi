@@ -82,7 +82,7 @@ export default function TelaChat({ navigation, route }) {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
+         keyboardVerticalOffset={60}
       >
         <FlatList
           ref={flatRef}
@@ -218,9 +218,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingBottom: 16,
-    paddingTop: 4,
+    paddingBottom: 24,
+    paddingTop: 8,
     gap: 10,
+    backgroundColor: '#D9D9D9',
   },
 
   input: {

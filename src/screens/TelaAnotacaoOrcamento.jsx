@@ -1,25 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
+  Keyboard,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 const BLUE = '#076BDE';
 
 export default function TelaAnotacaoOrcamento({ navigation, route }) {
+  const insets = useSafeAreaInsets();
   const anotacaoInicial = route?.params?.anotacao ?? '';
 
   const [anotacao, setAnotacao] = useState(anotacaoInicial);
   const [valor, setValor] = useState('');
-  const [etapa, setEtapa] = useState('anotacao'); // 'anotacao' | 'valor'
+  const [etapa, setEtapa] = useState('anotacao');
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardDidShow', e => {
+      setKeyboardHeight(e.endCoordinates.height);
+    });
+    const hide = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardHeight(0);
+    });
+    return () => { show.remove(); hide.remove(); };
+  }, []);
 
   function handleAvancar() {
     if (etapa === 'anotacao') {
@@ -30,11 +40,11 @@ export default function TelaAnotacaoOrcamento({ navigation, route }) {
   }
 
   const podeContinuar = etapa === 'anotacao' ? true : valor.trim().length > 0;
+  const bottomOffset = keyboardHeight > 0 ? keyboardHeight + 40 : insets.bottom + 16;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
 
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => etapa === 'valor' ? setEtapa('anotacao') : navigation.goBack()}
@@ -43,65 +53,58 @@ export default function TelaAnotacaoOrcamento({ navigation, route }) {
           <Ionicons name="arrow-back" size={24} color="#FFF" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.btnFinalizar} onPress={handleAvancar}>
+        <TouchableOpacity style={styles.btnFinalizarHeader} onPress={handleAvancar}>
           <Text style={styles.btnFinalizarTexto}>Finalizar serviço</Text>
         </TouchableOpacity>
       </View>
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-        >
 
-          {etapa === 'anotacao' ? (
-            <>
-              {/* Tela de anotação */}
-              <Text style={styles.titulo}>Adicione{'\n'}uma anotação{'\n'}de orçamento</Text>
+      <View style={styles.tituloContainer}>
+        <Text style={styles.titulo}>
+          {etapa === 'anotacao'
+            ? 'Adicione\numa anotação\nde orçamento'
+            : 'Insira o valor\ndo serviço'}
+        </Text>
+      </View>
 
-              <TextInput
-                style={styles.inputGrande}
-                placeholder="Anotações..."
-                placeholderTextColor="#AAA"
-                value={anotacao}
-                onChangeText={setAnotacao}
-                multiline
-                textAlignVertical="top"
-              />
+      <View style={[styles.inputContainer, { bottom: bottomOffset }]}>
+        {etapa === 'anotacao' ? (
+          <View style={styles.inputRow}>
+            <TextInput
+              style={styles.inputGrande}
+              placeholder="Anotações..."
+              placeholderTextColor="#AAA"
+              value={anotacao}
+              onChangeText={setAnotacao}
+              multiline
+              textAlignVertical="top"
+            />
+            <TouchableOpacity style={styles.btnAvancar} onPress={handleAvancar}>
+              <Ionicons name="send" size={20} color="#FFF" />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View>
+            <TextInput
+              style={styles.inputValor}
+              placeholder="Valor..."
+              placeholderTextColor="#AAA"
+              value={valor}
+              onChangeText={setValor}
+              keyboardType="numeric"
+              autoFocus
+            />
+            <TouchableOpacity
+              style={[styles.btnFinalizar2, !podeContinuar && styles.btnDesabilitado]}
+              onPress={handleAvancar}
+              disabled={!podeContinuar}
+            >
+              <Text style={styles.btnFinalizar2Texto}>Finalizar</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
 
-              <TouchableOpacity style={styles.btnAvancar} onPress={handleAvancar}>
-                <Ionicons name="send" size={20} color="#FFF" />
-              </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              {/* Tela de valor */}
-              <Text style={styles.titulo}>Insira o valor{'\n'}do serviço</Text>
-
-              <TextInput
-                style={styles.inputValor}
-                placeholder="Valor..."
-                placeholderTextColor="#AAA"
-                value={valor}
-                onChangeText={setValor}
-                keyboardType="numeric"
-              />
-
-              <TouchableOpacity
-                style={[styles.btnFinalizar2, !podeContinuar && styles.btnDesabilitado]}
-                onPress={handleAvancar}
-                disabled={!podeContinuar}
-              >
-                <Text style={styles.btnFinalizar2Texto}>Finalizar</Text>
-              </TouchableOpacity>
-            </>
-          )}
-
-        </ScrollView>
-      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -132,7 +135,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  btnFinalizar: {
+  btnFinalizarHeader: {
     backgroundColor: BLUE,
     borderRadius: 12,
     paddingHorizontal: 16,
@@ -147,11 +150,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
 
-  scroll: {
-    flexGrow: 1,
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingBottom: 10,
+  tituloContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   titulo: {
@@ -160,11 +162,24 @@ const styles = StyleSheet.create({
     color: '#9BA7B1',
     textAlign: 'center',
     lineHeight: 52,
-    marginTop: 80,
+  },
+
+  inputContainer: {
+    position: 'absolute',
+    left: 12,
+    right: 12,
+  },
+
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
 
   inputGrande: {
-    height: 50,
+    flex: 1,
+    minHeight: 60,
+    maxHeight: 120,
     backgroundColor: '#D9D9D9',
     borderWidth: 1,
     borderColor: '#333',
@@ -173,22 +188,17 @@ const styles = StyleSheet.create({
     fontFamily: 'Homenaje_400Regular',
     fontSize: 18,
     color: '#333',
-    marginRight: 50,
-    marginBottom: 10,
   },
 
   btnAvancar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     backgroundColor: BLUE,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#333',
-    position: 'absolute',
-    bottom: 15,
-    right: 10,
   },
 
   inputValor: {
@@ -201,7 +211,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Homenaje_400Regular',
     fontSize: 18,
     color: '#333',
-    marginTop: 30,
+    marginBottom: 10,
   },
 
   btnFinalizar2: {

@@ -8,8 +8,9 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  Keyboard,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 const BLUE = '#076BDE';
@@ -22,13 +23,25 @@ const MSGS_INICIAIS = [
 ];
 
 export default function TelaChatProfissional({ navigation, route }) {
+  const insets = useSafeAreaInsets();
   const clienteNome = route?.params?.profissionalNome ?? 'Nome Profissional';
 
   const [mensagens, setMensagens] = useState(MSGS_INICIAIS);
   const [texto, setTexto] = useState('');
   const [anotacao, setAnotacao] = useState('');
   const [modoAnotacao, setModoAnotacao] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const flatRef = useRef(null);
+
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardDidShow', e => {
+      setKeyboardHeight(e.endCoordinates.height);
+    });
+    const hide = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardHeight(0);
+    });
+    return () => { show.remove(); hide.remove(); };
+  }, []);
 
   useEffect(() => {
     setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 100);
@@ -72,10 +85,7 @@ export default function TelaChatProfissional({ navigation, route }) {
         </TouchableOpacity>
       </View>
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <View style={{ flex: 1, marginBottom: keyboardHeight }}>
         {/* Lista de mensagens */}
         <FlatList
           ref={flatRef}
@@ -96,7 +106,7 @@ export default function TelaChatProfissional({ navigation, route }) {
         </View>
 
         {/* Input row com botão de anotação */}
-        <View style={styles.inputRow}>
+        <View style={[styles.inputRow, { paddingBottom: insets.bottom + 8 }]}>
           <TextInput
             style={styles.input}
             placeholder={modoAnotacao ? 'Anotações...' : 'Mensagem...'}
@@ -131,7 +141,7 @@ export default function TelaChatProfissional({ navigation, route }) {
             </TouchableOpacity>
           )}
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   );
 }

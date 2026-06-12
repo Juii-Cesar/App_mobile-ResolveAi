@@ -50,9 +50,6 @@ export default function TelaInformarProblema({ navigation, route }) {
           <Ionicons name="arrow-back" size={24} color="#FFF" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.btnGlobo}>
-          <Ionicons name="globe-outline" size={24} color="#FFF" />
-        </TouchableOpacity>
       </View>
 
       <KeyboardAvoidingView
@@ -213,14 +210,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  btnGlobo: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: BLUE,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
 
   scroll: {
     paddingHorizontal: 20,
@@ -237,7 +226,7 @@ const styles = StyleSheet.create({
     height: 36,
     borderWidth: 1.5,
     borderColor: '#222',
-    marginTop: -5,
+    marginTop: 8,
     marginBottom: 10,
   },
 

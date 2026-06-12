@@ -6,13 +6,14 @@ import {
   TouchableOpacity,
   Animated,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { ImageBackground } from 'react-native';
 
 const BLUE = '#076BDE';
 
 export default function TelaServicoFinalizado({ navigation, route }) {
+  const insets = useSafeAreaInsets();
   const valor = route?.params?.valor ?? 'R$ 0,00';
 
   const gavelaAnim = useRef(new Animated.Value(200)).current;
@@ -49,7 +50,7 @@ export default function TelaServicoFinalizado({ navigation, route }) {
           <Animated.View
             style={[
               styles.gaveta,
-              { transform: [{ translateY: gavelaAnim }] },
+              { transform: [{ translateY: gavelaAnim }], paddingBottom: insets.bottom + 50 },
             ]}
           >
       
@@ -123,19 +124,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#EAEAEA',
     borderTopLeftRadius: 45,
     borderTopRightRadius: 45,
-
     paddingHorizontal: 35,
     paddingTop: 18,
-    paddingBottom: 40,
-
-    minHeight: 300,
-
     elevation: 10,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -3,
-    },
+    shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.2,
     shadowRadius: 5,
   },

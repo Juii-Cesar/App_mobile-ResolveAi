@@ -133,11 +133,11 @@ export default function TelaCarteira() {
 
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.botaoVoltar}>
-            <Ionicons name="chevron-back" size={22} color="#333" />
+            <Ionicons name="chevron-back" size={22} color="#FFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitulo}>Carteira</Text>
           <TouchableOpacity onPress={abrirModalCriacao} style={styles.botaoAdicionar}>
-            <Ionicons name="add" size={24} color="#333" />
+            <Ionicons name="add" size={24} color="#FFF" />
           </TouchableOpacity>
         </View>
 
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#004A99',
+    backgroundColor: '#005FEA',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
   cartaoNumero: {
     fontFamily: 'Homenaje_400Regular',
     fontSize: 18,
-    color: '#666',
+    color: '#6b6a6a',
     marginTop: 4,
   },
 
