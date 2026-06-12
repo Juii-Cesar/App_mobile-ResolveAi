@@ -6,13 +6,6 @@ const BACKGROUND_COLOR = '#076BDE';
 
 export default function TelaAbertura({ navigation }) {
   
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      navigation.replace('Inicial'); 
-    }, 3000); 
-
-    return () => clearTimeout(timer);
-  }, []);
 
   return (
     <View style={styles.container}>
