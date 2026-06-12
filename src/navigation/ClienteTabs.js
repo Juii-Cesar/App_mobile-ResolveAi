@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import TelaInicio from "../screens/TelaInicio";
 import TelaServicos from "../screens/TelaServicos";
 import { ContaStack } from "./ContaStack";
+import { ClienteStack } from "./ClienteStack";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const TAB_COUNT = 3;
@@ -114,7 +115,7 @@ export function ClienteTabs() {
       }}
       tabBar={(props) => <CustomTabBar {...props} />}
     >
-      <Tab.Screen name="Início" component={TelaInicio} />
+      <Tab.Screen name="Início" component={ClienteStack} />
 
       <Tab.Screen name="Serviços" component={TelaServicos} />
 

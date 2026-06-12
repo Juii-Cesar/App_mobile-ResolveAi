@@ -33,7 +33,7 @@ export default function TelaInformarProblema({ navigation, route }) {
   const podeContinuar = descricao.trim().length > 0 && prioridade !== null;
 
   function handleContinuar() {
-    navigation.navigate('TelaBuscarProfissional', {
+    navigation.replace('TelaBuscarProfissional', {
       descricao,
       prioridade: PRIORIDADES[prioridade].label,
       comentario,
