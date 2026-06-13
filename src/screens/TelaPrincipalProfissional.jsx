@@ -36,6 +36,8 @@ export default function TelaPrincipalProfissional({ navigation }) {
   const [profissaoSelecionada, setProfissaoSelecionada] = useState('');
   const [dropdownAberto, setDropdownAberto] = useState(false);
   const [dadosChamado, setDadosChamado] = useState(null);
+  
+  const [filaServicos, setFilaServicos] = useState([]);
 
   const [historicoRecente, setHistoricoRecente] = useState([
     { id: 'h1', titulo: 'Casa', subtitulo: 'Definir local', icone: 'home-outline', tipo: 'fixo' },
@@ -98,33 +100,90 @@ export default function TelaPrincipalProfissional({ navigation }) {
     }
   }, [textoBusca]);
 
+  useEffect(() => {
+    let channel;
+    async function escutarServicos() {
+      if (!online) {
+        setFilaServicos([]); 
+        return;
+      }
+
+      const { data: profData } = await supabase.from('profissoes').select('id').ilike('nome', profissaoSelecionada).maybeSingle();
+      if (!profData) return;
+
+      const { data: pendentes } = await supabase
+        .from('servicos')
+        .select('id, descricao, cliente:usuarios!idcliente(nome)')
+        .eq('status', 'procurandoProfissional')
+        .eq('idprofissao', profData.id);
+
+      if (pendentes && pendentes.length > 0) {
+        const formatados = pendentes.map(s => ({
+          id: s.id,
+          nomeCliente: s.cliente?.nome || 'Cliente',
+          servico: profissaoSelecionada ? `Precisa de: ${profissaoSelecionada}` : 'Serviço Geral',
+          descricao: s.descricao
+        }));
+        setFilaServicos(formatados);
+      }
+
+      channel = supabase.channel('novos_servicos')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'servicos', filter: `status=eq.procurandoProfissional` }, 
+          async (payload) => {
+            if (payload.new.idprofissao === profData.id) {
+              const { data: cli } = await supabase.from('usuarios').select('nome').eq('id', payload.new.idcliente).single();
+              setFilaServicos(prev => [...prev, {
+                id: payload.new.id,
+                nomeCliente: cli?.nome || 'Cliente',
+                servico: profissaoSelecionada ? `Precisa de: ${profissaoSelecionada}` : 'Serviço Geral',
+                descricao: payload.new.descricao
+              }]);
+            }
+          }
+        ).subscribe();
+    }
+
+    escutarServicos();
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [online, profissaoSelecionada]);
+
+
   function handleIniciar() {
     if (!profissaoSelecionada && profissoes.length > 0) {
       Alert.alert('Atenção', 'Selecione como deseja atuar antes de ficar online!');
       return;
     }
-
-    setOnline(true);
-
-    setDadosChamado({
-      nomeCliente: 'João Silva',
-      servico: profissaoSelecionada ? `Precisa de: ${profissaoSelecionada}` : 'Serviço Geral',
-    });
-
-    setTimeout(() => setModalVisivel(true), 3000);
+    setOnline(!online);
   }
 
-  function handleAceitar() {
-    setModalVisivel(false);
-    navigation.navigate('TelaChatProfissional', {
-      profissionalNome: 'Você',
-      dadosServico: dadosChamado,
-    });
+  async function handleAceitar() {
+    if (filaServicos.length === 0) return;
+    
+    const servico = filaServicos[0];
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { error } = await supabase.from('servicos')
+      .update({ status: 'servicoAceito', idprofissional: user.id })
+      .eq('id', servico.id);
+
+    if (!error) {
+      setOnline(false);
+      setFilaServicos([]); 
+      navigation.navigate('TelaChatProfissional', {
+        profissionalNome: servico.nomeCliente,
+        dadosServico: servico,
+      });
+    } else {
+      Alert.alert('Poxa!', 'Este serviço não está mais disponível.');
+      handleRecusar();
+    }
   }
 
   function handleRecusar() {
-    setModalVisivel(false);
-    setOnline(false);
+    setFilaServicos(prev => prev.slice(1));
   }
 
   function adicionarAoHistorico(novoEndereco) {
@@ -289,7 +348,7 @@ export default function TelaPrincipalProfissional({ navigation }) {
               <Feather name="sliders" size={28} color="#000" />
             </TouchableOpacity>
             
-            <TouchableOpacity style={[styles.botaoIniciar, online && styles.botaoIniciarOnline]} onPress={online ? () => setOnline(false) : handleIniciar}>
+            <TouchableOpacity style={[styles.botaoIniciar, online && styles.botaoIniciarOnline]} onPress={handleIniciar}>
               <Text style={styles.textoBotaoIniciar}>{online ? 'Parar' : 'Iniciar'}</Text>
             </TouchableOpacity>
             
@@ -347,8 +406,8 @@ export default function TelaPrincipalProfissional({ navigation }) {
       </Modal>
 
       <ModalServicoEncontrado
-        visivel={modalVisivel}
-        dados={dadosChamado}
+        visivel={filaServicos.length > 0}
+        dados={filaServicos[0] || null}
         onAceitar={handleAceitar}
         onRecusar={handleRecusar}
       />

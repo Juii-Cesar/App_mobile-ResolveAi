@@ -634,7 +634,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#333', // Contorno escuro
+    borderColor: '#333',
   },
   modalBtnSalvarText: {
     fontFamily: 'Homenaje_400Regular',

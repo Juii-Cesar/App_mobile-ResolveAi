@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, ActivityIndicator, Easing } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, ActivityIndicator, Easing, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 
+import { supabase } from '../services/supabase';
+
 const BLUE_COLOR = '#076BDE';
 
 const ESTADO = { BUSCANDO: 'buscando', ENCONTRADO: 'encontrado', CHAT_NOTIF: 'chat_notif' };
-const TEMPO_BUSCA_MS = 3000;
 
 export default function TelaBuscarProfissional({ navigation, route }) {
   const insets = useSafeAreaInsets();
@@ -17,6 +18,9 @@ export default function TelaBuscarProfissional({ navigation, route }) {
   const [estado, setEstado] = useState(ESTADO.BUSCANDO);
   const [notifChat, setNotifChat] = useState(0);
   const [location, setLocation] = useState(null);
+  
+  const [servicoId, setServicoId] = useState(null);
+  const [dadosProfissional, setDadosProfissional] = useState(null);
 
   const pulsoAnim = useRef(new Animated.Value(1)).current;
   const gavelaAnim = useRef(new Animated.Value(0)).current;
@@ -47,11 +51,54 @@ export default function TelaBuscarProfissional({ navigation, route }) {
   }, [estado]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setEstado(ESTADO.ENCONTRADO);
-      Animated.spring(gavelaAnim, { toValue: 1, tension: 50, friction: 8, useNativeDriver: true }).start();
-    }, TEMPO_BUSCA_MS);
-    return () => clearTimeout(timer);
+    let channel;
+    async function criarPedidoEEscutar() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profData } = await supabase.from('profissoes').select('id').ilike('nome', categoria).maybeSingle();
+      const idProf = profData ? profData.id : null;
+
+      const { data: servicoData, error } = await supabase.from('servicos')
+        .insert({
+          idcliente: user.id,
+          idprofissao: idProf,
+          descricao: descricao,
+          status: 'procurandoProfissional'
+        })
+        .select('id')
+        .single();
+
+      if (error || !servicoData) {
+        Alert.alert('Erro', 'Não foi possível buscar profissionais.');
+        return;
+      }
+
+      setServicoId(servicoData.id);
+
+      channel = supabase.channel(`servico_${servicoData.id}`)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'servicos', filter: `id=eq.${servicoData.id}` }, 
+          async (payload) => {
+            if (payload.new.status === 'servicoAceito' && payload.new.idprofissional) {
+              const { data: profAceitou } = await supabase.from('usuarios').select('nome, avaliacaomedia').eq('id', payload.new.idprofissional).single();
+              
+              setDadosProfissional({
+                nome: profAceitou?.nome || 'Profissional Localizado',
+                avaliacao: profAceitou?.avaliacaomedia || '5.0'
+              });
+              
+              setEstado(ESTADO.ENCONTRADO);
+              Animated.spring(gavelaAnim, { toValue: 1, tension: 50, friction: 8, useNativeDriver: true }).start();
+            }
+          }
+        ).subscribe();
+    }
+
+    criarPedidoEEscutar();
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
   }, []);
 
   useEffect(() => {
@@ -63,6 +110,13 @@ export default function TelaBuscarProfissional({ navigation, route }) {
       return () => clearTimeout(timer);
     }
   }, [estado]);
+
+  async function handleCancelarBusca() {
+    if (servicoId && estado === ESTADO.BUSCANDO) {
+      await supabase.from('servicos').delete().eq('id', servicoId);
+    }
+    navigation.goBack();
+  }
 
   const gavelaTranslate = gavelaAnim.interpolate({ inputRange: [0, 1], outputRange: [250, 0] });
   const espacoExtraBotao = insets.bottom > 0 ? insets.bottom : 15;
@@ -92,7 +146,7 @@ export default function TelaBuscarProfissional({ navigation, route }) {
       <View style={[styles.camadaSobreposicao, { paddingTop: insets.top + 10 }]} pointerEvents="box-none">
         
         <View style={styles.headerFlutuante} pointerEvents="box-none">
-          <TouchableOpacity style={styles.btnVoltar} onPress={() => navigation.goBack()}>
+          <TouchableOpacity style={styles.btnVoltar} onPress={handleCancelarBusca}>
             <Ionicons name="arrow-back" size={24} color="#FFF" />
           </TouchableOpacity>
         </View>
@@ -116,18 +170,18 @@ export default function TelaBuscarProfissional({ navigation, route }) {
               </View>
 
               <View style={styles.profissionalInfo}>
-                <Text style={styles.profissionalNome}>Profissional Localizado</Text>
+                <Text style={styles.profissionalNome}>{dadosProfissional?.nome || 'Profissional Localizado'}</Text>
                 <Text style={styles.profissionalDetalhe}>1.2 km de distância</Text>
               </View>
 
               <View style={styles.avaliacaoContainer}>
                 <Ionicons name="star" size={18} color="#F5A623" />
-                <Text style={styles.avaliacaoNota}>4.9</Text>
+                <Text style={styles.avaliacaoNota}>{dadosProfissional?.avaliacao || '5.0'}</Text>
                 <Text style={styles.profissionalDetalhe}>{categoria || 'Serviços'}</Text>
               </View>
             </View>
 
-            <TouchableOpacity style={styles.btnChat} onPress={() => navigation.navigate('TelaChat', { profissionalNome: 'Profissional Localizado' })}>
+            <TouchableOpacity style={styles.btnChat} onPress={() => navigation.navigate('TelaChat', { profissionalNome: dadosProfissional?.nome || 'Profissional Localizado' })}>
               <Ionicons name="chatbubble-outline" size={24} color="#FFF" />
               <Text style={styles.btnChatTexto}> Chat</Text>
 
