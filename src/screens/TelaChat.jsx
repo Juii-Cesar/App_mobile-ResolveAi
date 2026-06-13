@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,8 +23,10 @@ export default function TelaChatProfissional({ navigation, route }) {
   const dadosServico = route?.params?.dadosServico;
   const nomeCliente = dadosServico?.nomeCliente ?? 'Cliente';
   const servicoSolicitado = dadosServico?.servico ?? 'Serviço Geral';
+  
   const { iniciarServico, cancelarServico } = useServico();
   const profissaoLimpa = servicoSolicitado.replace('Precisa de: ', '');
+  
   const [mensagens, setMensagens] = useState([
     { id: '1', texto: `Olá! Vi que você aceitou meu pedido para ${profissaoLimpa}.`, minha: false },
     { id: '2', texto: 'Qual o valor médio da sua visita?', minha: false },

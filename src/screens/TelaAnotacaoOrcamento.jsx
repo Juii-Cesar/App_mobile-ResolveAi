@@ -7,7 +7,7 @@ import {
   TextInput,
   Keyboard,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 const BLUE = '#076BDE';
@@ -15,7 +15,6 @@ const BLUE = '#076BDE';
 export default function TelaAnotacaoOrcamento({ navigation, route }) {
   const insets = useSafeAreaInsets();
   const anotacaoInicial = route?.params?.anotacao ?? '';
-
   const [anotacao, setAnotacao] = useState(anotacaoInicial);
   const [valor, setValor] = useState('');
   const [etapa, setEtapa] = useState('anotacao');
@@ -31,33 +30,48 @@ export default function TelaAnotacaoOrcamento({ navigation, route }) {
     return () => { show.remove(); hide.remove(); };
   }, []);
 
+  const handleMascaraMoeda = (textoDigitado) => {
+    let numeroLimpo = textoDigitado.replace(/\D/g, '');
+    
+    if (numeroLimpo === '') {
+      setValor('');
+      return;
+    }
+
+    let valorNumerico = (Number(numeroLimpo) / 100).toFixed(2);
+    valorNumerico = valorNumerico.replace('.', ',');
+    valorNumerico = valorNumerico.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+    
+    setValor(`R$ ${valorNumerico}`);
+  };
+
   function handleAvancar() {
     if (etapa === 'anotacao') {
       setEtapa('valor');
     } else {
-      navigation.navigate('TelaServicoFinalizado', { valor: valor || 'A combinar' });
+      navigation.navigate('TelaServicoFinalizado', { valor: valor || 'R$ 0,00' });
     }
   }
 
-  const podeContinuar = etapa === 'anotacao' ? true : valor.trim().length > 0;
-  const bottomOffset = keyboardHeight > 0 ? keyboardHeight + 40 : insets.bottom + 16;
+  const podeContinuar = etapa === 'anotacao' ? true : valor.trim().length > 0 && valor !== 'R$ 0,00';
+  const bottomOffset = keyboardHeight > 0 ? keyboardHeight + 20 : insets.bottom + 20;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-
-      <View style={styles.header}>
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
           onPress={() => etapa === 'valor' ? setEtapa('anotacao') : navigation.goBack()}
           style={styles.btnVoltar}
         >
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+          <Ionicons name="arrow-back" size={26} color="#FFF" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.btnFinalizarHeader} onPress={handleAvancar}>
-          <Text style={styles.btnFinalizarTexto}>Finalizar serviço</Text>
-        </TouchableOpacity>
+        {etapa === 'anotacao' && (
+          <TouchableOpacity style={styles.btnFinalizarHeader} onPress={handleAvancar}>
+            <Text style={styles.btnFinalizarTexto}>Finalizar serviço</Text>
+          </TouchableOpacity>
+        )}
       </View>
-
 
       <View style={styles.tituloContainer}>
         <Text style={styles.titulo}>
@@ -80,17 +94,17 @@ export default function TelaAnotacaoOrcamento({ navigation, route }) {
               textAlignVertical="top"
             />
             <TouchableOpacity style={styles.btnAvancar} onPress={handleAvancar}>
-              <Ionicons name="send" size={20} color="#FFF" />
+              <Ionicons name="send" size={24} color="#FFF" />
             </TouchableOpacity>
           </View>
         ) : (
           <View>
             <TextInput
               style={styles.inputValor}
-              placeholder="Valor..."
+              placeholder="R$ 0,00"
               placeholderTextColor="#AAA"
               value={valor}
-              onChangeText={setValor}
+              onChangeText={handleMascaraMoeda}
               keyboardType="numeric"
               autoFocus
             />
@@ -104,8 +118,7 @@ export default function TelaAnotacaoOrcamento({ navigation, route }) {
           </View>
         )}
       </View>
-
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -114,123 +127,113 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#D9D9D9',
   },
-
   header: {
-    height: 60,
     backgroundColor: '#D9D9D9',
     borderBottomWidth: 1,
     borderBottomColor: '#9BA7B1',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
+    paddingHorizontal: 16, 
+    paddingBottom: 15,
   },
-
   btnVoltar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: BLUE,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  btnFinalizarHeader: {
-    backgroundColor: BLUE,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-
-  btnFinalizarTexto: {
-    color: '#FFF',
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 18,
-  },
-
-  tituloContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  titulo: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 46,
-    color: '#9BA7B1',
-    textAlign: 'center',
-    lineHeight: 52,
-  },
-
-  inputContainer: {
-    position: 'absolute',
-    left: 12,
-    right: 12,
-  },
-
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-
-  inputGrande: {
-    flex: 1,
-    minHeight: 60,
-    maxHeight: 120,
-    backgroundColor: '#D9D9D9',
-    borderWidth: 1,
-    borderColor: '#333',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 18,
-    color: '#333',
-  },
-
-  btnAvancar: {
-    width: 46,
+    width: 46, 
     height: 46,
     borderRadius: 23,
     backgroundColor: BLUE,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#333',
   },
-
-  inputValor: {
-    height: 50,
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#CCC',
-    paddingHorizontal: 12,
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 18,
-    color: '#333',
-    marginBottom: 10,
-  },
-
-  btnFinalizar2: {
+  btnFinalizarHeader: {
     backgroundColor: BLUE,
-    borderRadius: 12,
-    height: 42,
+    borderRadius: 16, 
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderWidth: 1.5,
+    borderColor: '#333', 
+  },
+  btnFinalizarTexto: {
+    color: '#FFF',
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 18, 
+  },
+  tituloContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#333',
+    paddingHorizontal: 20,
+    marginTop: -80,
   },
-
+  titulo: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 46, 
+    color: '#7A8A9E',
+    textAlign: 'center',
+    lineHeight: 50,
+  },
+  inputContainer: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  inputGrande: {
+    flex: 1,
+    minHeight: 65,
+    maxHeight: 140,
+    backgroundColor: '#FFF',
+    borderWidth: 1.5,
+    borderColor: '#A0A8B0',
+    borderRadius: 15,
+    paddingHorizontal: 15,
+    paddingTop: 15,
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 22, 
+    color: '#333',
+  },
+  btnAvancar: {
+    width: 54, 
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: BLUE,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#333', 
+  },
+  inputValor: {
+    height: 65,
+    backgroundColor: '#FFF',
+    borderRadius: 15,
+    borderWidth: 1.5,
+    borderColor: '#A0A8B0',
+    paddingHorizontal: 18,
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 28, 
+    color: '#333',
+    marginBottom: 15,
+  },
+  btnFinalizar2: {
+    backgroundColor: BLUE,
+    borderRadius: 15,
+    height: 55,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#333', 
+  },
   btnFinalizar2Texto: {
     color: '#FFF',
     fontFamily: 'Homenaje_400Regular',
-    fontSize: 20,
+    fontSize: 26, 
   },
-
   btnDesabilitado: {
     backgroundColor: '#9BA7B1',
+    borderColor: '#555',
   },
 });

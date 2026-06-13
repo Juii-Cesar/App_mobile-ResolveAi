@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -69,24 +70,20 @@ export default function TelaChatProfissional({ navigation, route }) {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-
-      {/* Header */}
-      <View style={styles.header}>
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.btnVoltar}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+          <Ionicons name="arrow-back" size={26} color="#FFF" />
         </TouchableOpacity>
 
         <Text style={styles.headerNome}>{clienteNome}</Text>
 
-        {/* Botão Finalizar serviço no header */}
         <TouchableOpacity style={styles.btnFinalizar} onPress={handleFinalizar}>
           <Text style={styles.btnFinalizarTexto}>Finalizar serviço</Text>
         </TouchableOpacity>
       </View>
 
       <View style={{ flex: 1, marginBottom: keyboardHeight }}>
-        {/* Lista de mensagens */}
         <FlatList
           ref={flatRef}
           data={mensagens}
@@ -96,17 +93,17 @@ export default function TelaChatProfissional({ navigation, route }) {
           showsVerticalScrollIndicator={false}
         />
 
-        {/* Sugestões rápidas */}
         <View style={styles.sugestoesRow}>
-          {SUGESTOES.map((s, i) => (
-            <TouchableOpacity key={i} style={styles.sugestao} onPress={() => enviar(s)}>
-              <Text style={styles.sugestaoTexto}>{s}</Text>
-            </TouchableOpacity>
-          ))}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+            {SUGESTOES.map((s, i) => (
+              <TouchableOpacity key={i} style={styles.sugestao} onPress={() => enviar(s)}>
+                <Text style={styles.sugestaoTexto}>{s}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
 
-        {/* Input row com botão de anotação */}
-        <View style={[styles.inputRow, { paddingBottom: insets.bottom + 8 }]}>
+        <View style={[styles.inputRow, { paddingBottom: insets.bottom + 10 }]}>
           <TextInput
             style={styles.input}
             placeholder={modoAnotacao ? 'Anotações...' : 'Mensagem...'}
@@ -118,31 +115,29 @@ export default function TelaChatProfissional({ navigation, route }) {
             multiline={modoAnotacao}
           />
 
-          {/* Botão alternar anotação / mensagem */}
           <TouchableOpacity
             style={[styles.btnIcone, modoAnotacao && styles.btnIconeAtivo]}
             onPress={() => setModoAnotacao(!modoAnotacao)}
           >
             <Ionicons
               name={modoAnotacao ? 'chatbubble-outline' : 'document-text-outline'}
-              size={20}
-              color={modoAnotacao ? '#FFF' : BLUE}
+              size={26}
+              color={modoAnotacao ? '#FFF' : '#333'}
             />
           </TouchableOpacity>
 
-          {/* Botão enviar (só no modo chat) */}
           {!modoAnotacao && (
             <TouchableOpacity
               style={[styles.btnEnviar, !texto.trim() && styles.btnEnviarDisabled]}
               onPress={() => enviar()}
               disabled={!texto.trim()}
             >
-              <Ionicons name="send" size={18} color="#FFF" />
+              <Ionicons name="send" size={24} color="#FFF" />
             </TouchableOpacity>
           )}
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -151,153 +146,138 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#D9D9D9',
   },
-
   header: {
-    height: 60,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
+    paddingBottom: 15,
     backgroundColor: '#D9D9D9',
     borderBottomWidth: 1,
     borderBottomColor: '#9BA7B1',
-    gap: 12,
+    gap: 15,
   },
-
   btnVoltar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     backgroundColor: BLUE,
     justifyContent: 'center',
     alignItems: 'center',
   },
-
   headerNome: {
     flex: 1,
     fontFamily: 'Homenaje_400Regular',
-    fontSize: 20,
+    fontSize: 26,
     color: '#111',
   },
-
   btnFinalizar: {
     backgroundColor: BLUE,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderWidth: 1.5,
+    borderColor: '#333',
   },
-
   btnFinalizarTexto: {
     fontFamily: 'Homenaje_400Regular',
-    fontSize: 13,
+    fontSize: 18,
     color: '#FFF',
   },
-
   listaPadding: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
+    paddingVertical: 15,
+    gap: 12,
   },
-
   bolha: {
-    maxWidth: '70%',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 16,
-    marginVertical: 4,
+    maxWidth: '75%',
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    borderRadius: 18,
+    marginVertical: 5,
   },
-
   bolhaMinha: {
     alignSelf: 'flex-end',
     backgroundColor: BLUE,
     borderBottomRightRadius: 4,
+    borderWidth: 1.5,
+    borderColor: '#333',
   },
-
   bolhaDele: {
     alignSelf: 'flex-start',
-    backgroundColor: '#EEE',
+    backgroundColor: '#FFF',
     borderBottomLeftRadius: 4,
+    borderWidth: 1.5,
+    borderColor: '#A0A8B0',
   },
-
   bolhaTexto: {
-    fontSize: 15,
+    fontSize: 20,
     color: '#222',
     fontFamily: 'Homenaje_400Regular',
   },
-
   bolhaTextoMinha: {
     color: '#FFF',
   },
-
   sugestoesRow: {
-    flexDirection: 'row',
-    gap: 8,
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 12,
   },
-
   sugestao: {
-    backgroundColor: '#EEE',
+    backgroundColor: '#FFF',
     borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: '#CCC',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderWidth: 1.5,
+    borderColor: '#A0A8B0',
   },
-
   sugestaoTexto: {
-    fontSize: 14,
+    fontSize: 18,
     color: '#444',
     fontFamily: 'Homenaje_400Regular',
   },
-
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingBottom: 16,
-    paddingTop: 4,
-    gap: 8,
+    paddingTop: 8,
+    gap: 12,
   },
-
   input: {
     flex: 1,
-    height: 46,
-    backgroundColor: '#EEE',
-    borderRadius: 23,
-    paddingHorizontal: 16,
-    fontSize: 15,
+    height: 54,
+    backgroundColor: '#FFF',
+    borderRadius: 27,
+    paddingHorizontal: 20,
+    fontSize: 20,
     color: '#333',
-    borderWidth: 1,
-    borderColor: '#CCC',
+    borderWidth: 1.5,
+    borderColor: '#A0A8B0',
     fontFamily: 'Homenaje_400Regular',
   },
-
   btnIcone: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: '#EEE',
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: '#FFF',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: BLUE,
+    borderWidth: 1.5,
+    borderColor: '#333',
   },
-
   btnIconeAtivo: {
     backgroundColor: BLUE,
-    borderColor: BLUE,
   },
-
   btnEnviar: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     backgroundColor: BLUE,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#333',
   },
-
   btnEnviarDisabled: {
     backgroundColor: '#9BA7B1',
+    borderColor: '#555',
   },
 });

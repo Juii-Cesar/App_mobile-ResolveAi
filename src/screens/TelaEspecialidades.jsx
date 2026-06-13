@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { useRegistration } from "../context/RegistrationContext";
 import LogoIcon from '../assets/icons/LogoIcon';
+import { supabase } from '../services/supabase';
 
 const BLUE_COLOR = '#076BDE';
 
 export default function TelaEspecialidades({ navigation }) {
   const { updateFormData } = useRegistration();
   const [selecionados, setSelecionados] = useState([]);
+  const [idsProfissoes, setIdsProfissoes] = useState({});
 
   const opcoes = [
     { nome: 'Eletricista', icon: 'flashlight', family: 'MaterialCommunityIcons' },
@@ -18,6 +20,25 @@ export default function TelaEspecialidades({ navigation }) {
     { nome: 'Mecânico', icon: 'wrench', family: 'FontAwesome5' },
     { nome: 'Pedreiro', icon: 'wall', family: 'MaterialCommunityIcons' },
   ];
+
+  useEffect(() => {
+    async function carregarIds() {
+      const nomes = opcoes.map(o => o.nome);
+      const { data, error } = await supabase
+        .from('profissoes')
+        .select('id, nome')
+        .in('nome', nomes);
+
+      if (data && !error) {
+        const mapa = {};
+        data.forEach(item => {
+          mapa[item.nome] = item.id;
+        });
+        setIdsProfissoes(mapa);
+      }
+    }
+    carregarIds();
+  }, []);
 
   const toggleSelecao = (itemNome) => {
     if (selecionados.includes(itemNome)) {
@@ -36,9 +57,13 @@ export default function TelaEspecialidades({ navigation }) {
       Alert.alert('Atenção', 'Selecione pelo menos uma especialidade.');
       return;
     }
-    
-    updateFormData({ especialidades: selecionados });
 
+    const especialidadesMapeadas = selecionados.map(nome => ({
+      profissao: nome,
+      idprofissao: idsProfissoes[nome] || null
+    }));
+
+    updateFormData({ especialidades: especialidadesMapeadas });
     navigation.navigate('TelaVerificacao'); 
   };
 

@@ -131,7 +131,23 @@ export default function TelaVerificacao({ navigation, route }) {
 
       if (dbError) {
         console.log("ERRO COMPLETO DO BANCO:", dbError);
-        throw new Error("Erro DB: " + dbError.message);
+        throw new Error("Erro DB (Documentos): " + dbError.message);
+      }
+
+      if (formData.especialidades && formData.especialidades.length > 0) {
+        const profissoesInsert = formData.especialidades.map(item => ({
+          profissional_id: user.id,
+          profissao: item.profissao,
+          idprofissao: item.idprofissao 
+        }));
+
+        const { error: erroProfissoes } = await supabase
+          .from('profissoes_profissional')
+          .insert(profissoesInsert);
+
+        if (erroProfissoes) {
+          throw new Error("Erro DB (Profissões): " + erroProfissoes.message);
+        }
       }
 
       navigation.navigate("ProfissionalStack");
