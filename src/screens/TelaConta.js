@@ -6,17 +6,37 @@ import {
   StyleSheet,
   Modal,
   Image,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import LogoIcon from '../assets/icons/LogoIcon';
+import { useServico } from '../context/ServicoContext';
 
 export default function TelaConta() {
   const navigation = useNavigation();
+  const { servicoAtivo, cancelarServico } = useServico();
+
   const [modalPerfilVisivel, setModalPerfilVisivel] = useState(false);
   const [foto, setFoto] = useState(null);
   const [nome, setNome] = useState('Nome');
+
+  function handleCancelarServico() {
+    Alert.alert(
+      'Cancelar serviço',
+      'Deseja realmente cancelar o serviço em andamento?',
+      [
+        { text: 'Não', style: 'cancel' },
+        {
+          text: 'Sim, cancelar',
+          style: 'destructive',
+          onPress: () => cancelarServico(),
+        },
+      ],
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.container}>
@@ -31,54 +51,87 @@ export default function TelaConta() {
           </View>
         </View>
 
-
         <View style={styles.botoesGrid}>
           <TouchableOpacity style={styles.botao} onPress={() => navigation.navigate('TelaMinhaConta')}>
             <Text style={styles.botaoTexto}>Conta</Text>
           </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.botao}
-          onPress={() => navigation.navigate('TelaCarteira')}
-        >
-          <Text style={styles.botaoTexto}>Carteira</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.botao} onPress={() => navigation.navigate('TelaCarteira')}>
+            <Text style={styles.botaoTexto}>Carteira</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.botaoGrande}
-          onPress={() => navigation.navigate('TelaFavoritos')}
-        >
+          <TouchableOpacity style={styles.botaoGrande} onPress={() => navigation.navigate('TelaFavoritos')}>
+            <View style={styles.botaoComIcone}>
+              <Text style={styles.botaoTexto}>Favoritos</Text>
+            </View>
+          </TouchableOpacity>
 
-        <View style={styles.botaoComIcone}>
-          <Text style={styles.botaoTexto}>Favoritos</Text>
+          <TouchableOpacity style={styles.botaoGrande} onPress={() => navigation.navigate('TelaEnderecos')}>
+            <Text style={styles.botaoTexto}>Endereços</Text>
+          </TouchableOpacity>
         </View>
-      </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.botaoGrande}
-        onPress={() => navigation.navigate('TelaEnderecos')}
-      >
-        <Text style={styles.botaoTexto}>Endereços</Text>
-      </TouchableOpacity>
-    </View>
+        {/* Card de serviço ativo — substitui avaliação enquanto houver serviço */}
+        {servicoAtivo ? (
+          <View style={styles.servicoAtivoCard}>
+            {/* Indicador pulsante de status */}
+            <View style={styles.servicoAtivoTopo}>
+              <View style={styles.badgeAtivo}>
+                <View style={styles.badgePonto} />
+                <Text style={styles.badgeTexto}>Em atendimento</Text>
+              </View>
+              <Text style={styles.servicoCategoria}>{servicoAtivo.categoria}</Text>
+            </View>
 
-    <View style={styles.avaliacaoCard}>
-  <View>
-    <Text style={styles.nota}>4.8</Text>
-    <Text style={styles.subTexto}>Sua avaliação</Text>
-  </View>
+            <Text style={styles.servicoProfissional} numberOfLines={1}>
+              {servicoAtivo.profissionalNome}
+            </Text>
+            <Text style={styles.servicoDescricao} numberOfLines={2}>
+              {servicoAtivo.descricao}
+            </Text>
 
-  <Text style={styles.totalAvaliacoes}>
-    12 avaliações
-  </Text>
-</View>
+            <View style={styles.servicoBotoes}>
+              {/* Voltar ao chat */}
+              <TouchableOpacity
+                style={styles.btnVoltarChat}
+                onPress={() =>
+                  navigation.navigate('Início', {
+                    screen: 'TelaChat',
+                    params: servicoAtivo.routeParams,
+                  })
+                }
+              >
+                <Ionicons name="chatbubble-ellipses-outline" size={18} color="#FFF" />
+                <Text style={styles.btnVoltarChatTexto}>Abrir chat</Text>
+              </TouchableOpacity>
 
-  <View style={styles.historicoCard}>
-    <Text style={styles.historicoTitulo}>Histórico</Text>
-  </View>
+              {/* Cancelar serviço */}
+              <TouchableOpacity
+                style={styles.btnCancelarServico}
+                onPress={handleCancelarServico}
+              >
+                <Ionicons name="close-circle-outline" size={18} color="#D32F2F" />
+                <Text style={styles.btnCancelarServicoTexto}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          /* Card de avaliação — exibido normalmente quando não há serviço ativo */
+          <View style={styles.avaliacaoCard}>
+            <View>
+              <Text style={styles.nota}>4.8</Text>
+              <Text style={styles.subTexto}>Sua avaliação</Text>
+            </View>
+            <Text style={styles.totalAvaliacoes}>12 avaliações</Text>
+          </View>
+        )}
 
+        <View style={styles.historicoCard}>
+          <Text style={styles.historicoTitulo}>Histórico</Text>
+        </View>
 
       </View>
+
       {/* Modal perfil */}
       <Modal
         visible={modalPerfilVisivel}
@@ -102,7 +155,6 @@ export default function TelaConta() {
                   <Ionicons name="person-outline" size={48} color="#555" />
                 )}
               </View>
-
               <TouchableOpacity>
                 <Text style={styles.linkEditar}>Editar</Text>
               </TouchableOpacity>
@@ -142,19 +194,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#CBCBCB',
     marginBottom: 16,
   },
-  logoCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: '#1565C0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
   headerDireita: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -164,7 +203,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#222',
     fontWeight: '500',
-    fontFamily:"Homenaje_400Regular",
+    fontFamily: 'Homenaje_400Regular',
   },
   botoesGrid: {
     flexDirection: 'row',
@@ -190,7 +229,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     fontSize: 20,
-    fontFamily:"Homenaje_400Regular",
+    fontFamily: 'Homenaje_400Regular',
   },
   botaoGrande: {
     width: '100%',
@@ -200,8 +239,99 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
-},
+  },
 
+  // ── Card serviço ativo ──────────────────────────────────────────
+  servicoAtivoCard: {
+    backgroundColor: '#EEF4FF',
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    marginBottom: 15,
+    marginHorizontal: 14,
+    borderWidth: 1.5,
+    borderColor: '#076BDE',
+  },
+  servicoAtivoTopo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  badgeAtivo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#E8F5E9',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  badgePonto: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#388E3C',
+  },
+  badgeTexto: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 13,
+    color: '#2E7D32',
+  },
+  servicoCategoria: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 13,
+    color: '#076BDE',
+  },
+  servicoProfissional: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 22,
+    color: '#111',
+    marginBottom: 4,
+  },
+  servicoDescricao: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 14,
+  },
+  servicoBotoes: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  btnVoltarChat: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#076BDE',
+    borderRadius: 12,
+    paddingVertical: 10,
+  },
+  btnVoltarChatTexto: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 16,
+    color: '#FFF',
+  },
+  btnCancelarServico: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: '#D32F2F',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  btnCancelarServicoTexto: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 16,
+    color: '#D32F2F',
+  },
+
+  // ── Card avaliação (padrão sem serviço ativo) ───────────────────
   avaliacaoCard: {
     backgroundColor: '#EEF2EC',
     borderRadius: 20,
@@ -213,144 +343,93 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     marginHorizontal: 14,
   },
-
   nota: {
     fontSize: 46,
-    fontFamily:"Homenaje_400Regular",
+    fontFamily: 'Homenaje_400Regular',
     fontWeight: 'bold',
     color: '#2E7D32',
-},
-
+  },
   subTexto: {
     fontSize: 19,
     color: '#555',
-    fontFamily:"Homenaje_400Regular",
-},
-
+    fontFamily: 'Homenaje_400Regular',
+  },
   totalAvaliacoes: {
     fontSize: 19,
     color: '#888',
-    fontFamily:"Homenaje_400Regular",
-},
+    fontFamily: 'Homenaje_400Regular',
+  },
 
+  // ── Histórico ───────────────────────────────────────────────────
   historicoCard: {
     backgroundColor: '#F5F5F5',
     borderRadius: 20,
     padding: 20,
     marginHorizontal: 14,
   },
-
   historicoTitulo: {
     fontSize: 24,
     marginBottom: 18,
-    fontFamily:"Homenaje_400Regular",
-},
+    fontFamily: 'Homenaje_400Regular',
+  },
 
-  itemHistorico: {
+  // ── Modal ───────────────────────────────────────────────────────
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    paddingTop: 80,
+    paddingLeft: 10,
+  },
+  modalBox: {
+    width: 235,
+    backgroundColor: '#FFF',
+    borderRadius: 18,
+    borderTopWidth: 5,
+    borderTopColor: '#1565C0',
+    padding: 16,
+  },
+  modalTitulo: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 24,
+    color: '#1565C0',
+    marginBottom: 14,
+  },
+  fotoContainer: {
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  fotoCirculo: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 1,
+    borderColor: '#888',
+    backgroundColor: '#EFEFEF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  fotoImagem: {
+    width: '100%',
+    height: '100%',
+  },
+  linkEditar: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 20,
+    color: '#1565C0',
+    marginTop: 4,
+  },
+  nomeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-},
-
-  status: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 12,
-},
-
-  pedido: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#333',
-},
-
-  detalhe: {
-    fontSize: 13,
-    fontFamily:"Homenaje_400Regular",
-    color: '#888',
-},
-
-  divisor: {
-    height: 1,
-    backgroundColor: '#D9D9D9',
-    marginVertical: 6,
-},
-historicoVazio: {
-  height: 60,
-},
-
-modalOverlay: {
-  flex: 1,
-  backgroundColor: 'rgba(0,0,0,0.35)',
-  justifyContent: 'flex-start',
-  alignItems: 'flex-start',
-  paddingTop: 80,
-  paddingLeft: 10,
-},
-
-modalBox: {
-  width: 235,
-  backgroundColor: '#FFF',
-
-  borderRadius: 18,
-
-  borderTopWidth: 5,
-  borderTopColor: '#1565C0',
-
-  padding: 16,
-},
-
-modalTitulo: {
-  fontFamily: 'Homenaje_400Regular',
-  fontSize: 24,
-  color: '#1565C0',
-  marginBottom: 14,
-},
-
-fotoContainer: {
-  alignItems: 'center',
-  marginBottom: 14,
-},
-
-fotoCirculo: {
-  width: 100,
-  height: 100,
-  borderRadius: 50,
-
-  borderWidth: 1,
-  borderColor: '#888',
-
-  backgroundColor: '#EFEFEF',
-
-  justifyContent: 'center',
-  alignItems: 'center',
-
-  overflow: 'hidden',
-},
-
-fotoImagem: {
-  width: '100%',
-  height: '100%',
-},
-
-linkEditar: {
-  fontFamily: 'Homenaje_400Regular',
-  fontSize: 20,
-  color: '#1565C0',
-  marginTop: 4,
-},
-
-nomeRow: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  marginTop: 10,
-},
-
-nomeTexto: {
-  fontFamily: 'Homenaje_400Regular',
-  fontSize: 25,
-  color: '#111',
-},
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  nomeTexto: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 25,
+    color: '#111',
+  },
 });

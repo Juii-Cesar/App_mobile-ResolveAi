@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useServico } from '../context/ServicoContext';
 
 const BLUE = '#076BDE';
 
@@ -22,6 +23,7 @@ const PRIORIDADES = [
 
 export default function TelaInformarProblema({ navigation, route }) {
   const categoriaSelecionada = route?.params?.categoria ?? '';
+  const { servicoAtivo } = useServico();
 
   const [descricao, setDescricao] = useState('');
   const [prioridade, setPrioridade] = useState(null);
@@ -30,9 +32,10 @@ export default function TelaInformarProblema({ navigation, route }) {
   const [mostrarComentario, setMostrarComentario] = useState(false);
   const [mostrarEndereco, setMostrarEndereco] = useState(false);
 
-  const podeContinuar = descricao.trim().length > 0 && prioridade !== null;
+  const podeContinuar = descricao.trim().length > 0 && prioridade !== null && !servicoAtivo;
 
   function handleContinuar() {
+    if (servicoAtivo) return;
     navigation.replace('TelaBuscarProfissional', {
       descricao,
       prioridade: PRIORIDADES[prioridade].label,
@@ -49,7 +52,6 @@ export default function TelaInformarProblema({ navigation, route }) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.btnVoltar}>
           <Ionicons name="arrow-back" size={24} color="#FFF" />
         </TouchableOpacity>
-
       </View>
 
       <KeyboardAvoidingView
@@ -69,6 +71,26 @@ export default function TelaInformarProblema({ navigation, route }) {
             </Text>
           </View>
 
+          {/* Banner de bloqueio quando há serviço ativo */}
+          {servicoAtivo && (
+            <TouchableOpacity
+              style={styles.bannerServicoAtivo}
+              onPress={() => navigation.navigate('TelaChat', servicoAtivo.routeParams)}
+              activeOpacity={0.85}
+            >
+              <View style={styles.bannerEsquerda}>
+                <View style={styles.badgePonto} />
+                <View>
+                  <Text style={styles.bannerTitulo}>Você já tem um serviço ativo</Text>
+                  <Text style={styles.bannerSub}>
+                    {servicoAtivo.profissionalNome} · {servicoAtivo.categoria}
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chatbubble-ellipses-outline" size={22} color="#076BDE" />
+            </TouchableOpacity>
+          )}
+
           <Text style={styles.titulo}>
             Precisando de um{'\n'}
             <Text style={styles.tituloDestaque}>
@@ -85,15 +107,15 @@ export default function TelaInformarProblema({ navigation, route }) {
 
           <View style={styles.divisor} />
 
-
           <TextInput
-            style={styles.input}
+            style={[styles.input, servicoAtivo && styles.inputBloqueado]}
             placeholder="Insira uma breve descrição do problema"
             placeholderTextColor="#999"
             value={descricao}
             onChangeText={setDescricao}
             multiline
             numberOfLines={3}
+            editable={!servicoAtivo}
           />
 
           <View style={styles.prioridadeContainer}>
@@ -105,18 +127,21 @@ export default function TelaInformarProblema({ navigation, route }) {
                   style={[
                     styles.prioridadeBtn,
                     prioridade === i && { backgroundColor: p.cor, borderColor: p.cor },
+                    servicoAtivo && styles.prioridadeBtnBloqueado,
                   ]}
-                  onPress={() => setPrioridade(i)}
+                  onPress={() => !servicoAtivo && setPrioridade(i)}
+                  disabled={!!servicoAtivo}
                 >
                   <Ionicons
                     name={p.icone}
                     size={16}
-                    color={prioridade === i ? '#FFF' : p.cor}
+                    color={prioridade === i ? '#FFF' : servicoAtivo ? '#CCC' : p.cor}
                   />
                   <Text
                     style={[
                       styles.prioridadeBtnText,
                       prioridade === i && { color: '#FFF' },
+                      servicoAtivo && { color: '#CCC' },
                     ]}
                   >
                     {p.label}
@@ -126,20 +151,22 @@ export default function TelaInformarProblema({ navigation, route }) {
             </View>
           </View>
 
-
           <TouchableOpacity
             style={styles.addBtn}
-            onPress={() => setMostrarComentario(!mostrarComentario)}
+            onPress={() => !servicoAtivo && setMostrarComentario(!mostrarComentario)}
+            disabled={!!servicoAtivo}
           >
             <Ionicons
               name={mostrarComentario ? 'remove-circle-outline' : 'add-circle-outline'}
               size={20}
-              color="#555"
+              color={servicoAtivo ? '#CCC' : '#555'}
             />
-            <Text style={styles.addBtnText}>Add. comentário</Text>
+            <Text style={[styles.addBtnText, servicoAtivo && { color: '#CCC' }]}>
+              Add. comentário
+            </Text>
           </TouchableOpacity>
 
-          {mostrarComentario && (
+          {mostrarComentario && !servicoAtivo && (
             <TextInput
               style={[styles.input, { marginTop: 8 }]}
               placeholder="Comentário adicional..."
@@ -150,20 +177,22 @@ export default function TelaInformarProblema({ navigation, route }) {
             />
           )}
 
-
           <TouchableOpacity
             style={styles.addBtn}
-            onPress={() => setMostrarEndereco(!mostrarEndereco)}
+            onPress={() => !servicoAtivo && setMostrarEndereco(!mostrarEndereco)}
+            disabled={!!servicoAtivo}
           >
             <Ionicons
               name={mostrarEndereco ? 'remove-circle-outline' : 'add-circle-outline'}
               size={20}
-              color="#555"
+              color={servicoAtivo ? '#CCC' : '#555'}
             />
-            <Text style={styles.addBtnText}>Add. endereço</Text>
+            <Text style={[styles.addBtnText, servicoAtivo && { color: '#CCC' }]}>
+              Add. endereço
+            </Text>
           </TouchableOpacity>
 
-          {mostrarEndereco && (
+          {mostrarEndereco && !servicoAtivo && (
             <TextInput
               style={[styles.input, { marginTop: 8 }]}
               placeholder="Endereço do serviço..."
@@ -178,8 +207,11 @@ export default function TelaInformarProblema({ navigation, route }) {
             onPress={handleContinuar}
             disabled={!podeContinuar}
           >
-            <Text style={styles.btnContinuarText}>Continuar</Text>
+            <Text style={styles.btnContinuarText}>
+              {servicoAtivo ? 'Serviço em andamento' : 'Continuar'}
+            </Text>
           </TouchableOpacity>
+
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -191,7 +223,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#D9D9D9',
   },
-
   header: {
     height: 42,
     flexDirection: 'row',
@@ -200,7 +231,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginTop: 4,
   },
-
   btnVoltar: {
     width: 40,
     height: 40,
@@ -209,14 +239,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-
-
   scroll: {
     paddingHorizontal: 20,
     paddingBottom: 40,
     paddingTop: 0,
   },
-
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -229,7 +256,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 10,
   },
-
   searchText: {
     marginLeft: 8,
     color: '#444',
@@ -238,19 +264,53 @@ const styles = StyleSheet.create({
     fontFamily: 'Homenaje_400Regular',
   },
 
+  // ── Banner serviço ativo ────────────────────────────────────────
+  bannerServicoAtivo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#EEF4FF',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#076BDE',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 14,
+  },
+  bannerEsquerda: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  badgePonto: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#388E3C',
+  },
+  bannerTitulo: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 16,
+    color: '#111',
+  },
+  bannerSub: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 13,
+    color: '#555',
+  },
+
   titulo: {
     fontSize: 34,
     lineHeight: 38,
     color: '#111',
     fontFamily: 'Homenaje_400Regular',
   },
-
   tituloDestaque: {
     fontSize: 34,
     color: '#111',
     fontFamily: 'Homenaje_400Regular',
   },
-
   subtitulo: {
     marginTop: 10,
     fontSize: 14,
@@ -258,7 +318,6 @@ const styles = StyleSheet.create({
     color: '#555',
     fontFamily: 'Homenaje_400Regular',
   },
-
   divisor: {
     width: 40,
     height: 5,
@@ -267,7 +326,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginVertical: 12,
   },
-
   input: {
     backgroundColor: '#EEE',
     borderRadius: 12,
@@ -280,23 +338,22 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     fontFamily: 'Homenaje_400Regular',
   },
-
+  inputBloqueado: {
+    opacity: 0.45,
+  },
   prioridadeContainer: {
     marginBottom: 12,
   },
-
   prioridadeLabel: {
     fontSize: 18,
     color: '#9BA7B1',
     fontFamily: 'Homenaje_400Regular',
     marginBottom: 8,
   },
-
   prioridadeOpcoes: {
     flexDirection: 'column',
     gap: 8,
   },
-
   prioridadeBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -307,27 +364,26 @@ const styles = StyleSheet.create({
     borderColor: '#A8B7C1',
     backgroundColor: '#EEE',
   },
-
+  prioridadeBtnBloqueado: {
+    opacity: 0.45,
+  },
   prioridadeBtnText: {
     marginLeft: 8,
     fontSize: 18,
     color: '#555',
     fontFamily: 'Homenaje_400Regular',
   },
-
   addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
   },
-
   addBtnText: {
     marginLeft: 8,
     fontSize: 18,
     color: '#9BA7B1',
     fontFamily: 'Homenaje_400Regular',
   },
-
   btnContinuar: {
     alignSelf: 'center',
     width: '72%',
@@ -340,11 +396,9 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#111',
   },
-
   btnContinuarDisabled: {
     backgroundColor: '#9BA7B1',
   },
-
   btnContinuarText: {
     color: '#FFF',
     fontSize: 24,

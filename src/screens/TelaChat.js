@@ -8,9 +8,11 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useServico } from '../context/ServicoContext';
 
 const BLUE = '#076BDE';
 
@@ -24,13 +26,29 @@ const MSGS_INICIAIS = [
 
 export default function TelaChat({ navigation, route }) {
   const profissionalNome = route?.params?.profissionalNome ?? 'Profissional';
+  const profissionalId   = route?.params?.profissionalId   ?? 'default';
+  const categoria        = route?.params?.categoria        ?? '';
+  const descricao        = route?.params?.descricao        ?? '';
+
+  const { iniciarServico, cancelarServico } = useServico();
 
   const [mensagens, setMensagens] = useState(MSGS_INICIAIS);
   const [texto, setTexto] = useState('');
   const flatRef = useRef(null);
 
+  // Registra o serviço ativo assim que o chat abre
   useEffect(() => {
+    iniciarServico({
+      profissionalNome,
+      profissionalId,
+      categoria,
+      descricao,
+      routeParams: route?.params ?? {},
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  useEffect(() => {
     setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 100);
   }, [mensagens]);
 
@@ -38,24 +56,34 @@ export default function TelaChat({ navigation, route }) {
     const novaMensagem = msg ?? texto.trim();
     if (!novaMensagem) return;
 
-    const nova = {
-      id: Date.now().toString(),
-      texto: novaMensagem,
-      minha: true,
-    };
+    const nova = { id: Date.now().toString(), texto: novaMensagem, minha: true };
     setMensagens(prev => [...prev, nova]);
     setTexto('');
 
     setTimeout(() => {
       setMensagens(prev => [
         ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          texto: 'Ok, já estou a caminho!',
-          minha: false,
-        },
+        { id: (Date.now() + 1).toString(), texto: 'Ok, já estou a caminho!', minha: false },
       ]);
     }, 1200);
+  }
+
+  function handleEncerrar() {
+    Alert.alert(
+      'Encerrar serviço',
+      'Deseja realmente cancelar o serviço em andamento?',
+      [
+        { text: 'Não', style: 'cancel' },
+        {
+          text: 'Sim, cancelar',
+          style: 'destructive',
+          onPress: () => {
+            cancelarServico();
+            navigation.popToTop();
+          },
+        },
+      ],
+    );
   }
 
   function renderMensagem({ item }) {
@@ -70,19 +98,24 @@ export default function TelaChat({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.btnVoltar}>
           <Ionicons name="arrow-back" size={24} color="#FFF" />
         </TouchableOpacity>
 
         <Text style={styles.headerNome}>{profissionalNome}</Text>
+
+        {/* Botão encerrar no header */}
+        <TouchableOpacity onPress={handleEncerrar} style={styles.btnEncerrar}>
+          <Ionicons name="close-circle-outline" size={20} color="#D32F2F" />
+          <Text style={styles.btnEncerrarTexto}>Encerrar</Text>
+        </TouchableOpacity>
       </View>
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-         keyboardVerticalOffset={60}
+        keyboardVerticalOffset={60}
       >
         <FlatList
           ref={flatRef}
@@ -154,6 +187,24 @@ const styles = StyleSheet.create({
     fontFamily: 'Homenaje_400Regular',
     fontSize: 20,
     color: '#111',
+    flex: 1,
+  },
+
+  btnEncerrar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#D32F2F',
+  },
+
+  btnEncerrarTexto: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 14,
+    color: '#D32F2F',
   },
 
   listaPadding: {

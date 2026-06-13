@@ -4,6 +4,7 @@ import { useFonts, Homenaje_400Regular } from '@expo-google-fonts/homenaje';
 import { UserTypeProvider } from "./src/context/UserTypeContext";
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { RegistrationProvider } from './src/context/RegistrationContext';
+import { ServicoProvider } from './src/context/ServicoContext';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function App() {
@@ -17,12 +18,14 @@ export default function App() {
 
   return (
     <UserTypeProvider>
-      <RegistrationProvider> 
+      <RegistrationProvider>
+        <ServicoProvider>
         <SafeAreaProvider>
           <NavigationContainer>
             <RootNavigator /> 
           </NavigationContainer>
         </SafeAreaProvider>
+        </ServicoProvider>
       </RegistrationProvider>
     </UserTypeProvider>
   );
