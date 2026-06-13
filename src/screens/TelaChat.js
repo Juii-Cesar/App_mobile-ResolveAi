@@ -15,37 +15,29 @@ import { Ionicons } from '@expo/vector-icons';
 import { useServico } from '../context/ServicoContext';
 
 const BLUE = '#076BDE';
+const SUGESTOES = ['Olá, já estou a caminho!', 'Pode confirmar o endereço?', 'Chego em 10 min'];
 
-const SUGESTOES = ['Olá', 'Está vindo ?'];
+export default function TelaChatProfissional({ navigation, route }) {
 
-const MSGS_INICIAIS = [
-  { id: '1', texto: 'Olá! Vi sua solicitação.', minha: false },
-  { id: '2', texto: 'Posso ir até você agora.', minha: false },
-  { id: '3', texto: 'Qual é o endereço exato?', minha: false },
-];
-
-export default function TelaChat({ navigation, route }) {
-  const profissionalNome = route?.params?.profissionalNome ?? 'Profissional';
-  const profissionalId   = route?.params?.profissionalId   ?? 'default';
-  const categoria        = route?.params?.categoria        ?? '';
-  const descricao        = route?.params?.descricao        ?? '';
-
+  const dadosServico = route?.params?.dadosServico;
+  const nomeCliente = dadosServico?.nomeCliente ?? 'Cliente';
+  const servicoSolicitado = dadosServico?.servico ?? 'Serviço Geral';
   const { iniciarServico, cancelarServico } = useServico();
-
-  const [mensagens, setMensagens] = useState(MSGS_INICIAIS);
+  const profissaoLimpa = servicoSolicitado.replace('Precisa de: ', '');
+  const [mensagens, setMensagens] = useState([
+    { id: '1', texto: `Olá! Vi que você aceitou meu pedido para ${profissaoLimpa}.`, minha: false },
+    { id: '2', texto: 'Qual o valor médio da sua visita?', minha: false },
+  ]);
+  
   const [texto, setTexto] = useState('');
   const flatRef = useRef(null);
 
-  // Registra o serviço ativo assim que o chat abre
   useEffect(() => {
     iniciarServico({
-      profissionalNome,
-      profissionalId,
-      categoria,
-      descricao,
+      clienteNome: nomeCliente,
+      servico: servicoSolicitado,
       routeParams: route?.params ?? {},
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -63,15 +55,15 @@ export default function TelaChat({ navigation, route }) {
     setTimeout(() => {
       setMensagens(prev => [
         ...prev,
-        { id: (Date.now() + 1).toString(), texto: 'Ok, já estou a caminho!', minha: false },
+        { id: (Date.now() + 1).toString(), texto: 'Perfeito, aguardo você.', minha: false },
       ]);
-    }, 1200);
+    }, 1500);
   }
 
   function handleEncerrar() {
     Alert.alert(
       'Encerrar serviço',
-      'Deseja realmente cancelar o serviço em andamento?',
+      'Deseja realmente cancelar o serviço em andamento com este cliente?',
       [
         { text: 'Não', style: 'cancel' },
         {
@@ -103,9 +95,11 @@ export default function TelaChat({ navigation, route }) {
           <Ionicons name="arrow-back" size={24} color="#FFF" />
         </TouchableOpacity>
 
-        <Text style={styles.headerNome}>{profissionalNome}</Text>
+        <View style={styles.headerInfo}>
+          <Text style={styles.headerNome} numberOfLines={1}>{nomeCliente}</Text>
+          <Text style={styles.headerServico} numberOfLines={1}>{servicoSolicitado}</Text>
+        </View>
 
-        {/* Botão encerrar no header */}
         <TouchableOpacity onPress={handleEncerrar} style={styles.btnEncerrar}>
           <Ionicons name="close-circle-outline" size={20} color="#D32F2F" />
           <Text style={styles.btnEncerrarTexto}>Encerrar</Text>
@@ -127,11 +121,13 @@ export default function TelaChat({ navigation, route }) {
         />
 
         <View style={styles.sugestoesRow}>
-          {SUGESTOES.map((s, i) => (
-            <TouchableOpacity key={i} style={styles.sugestao} onPress={() => enviar(s)}>
-              <Text style={styles.sugestaoTexto}>{s}</Text>
-            </TouchableOpacity>
-          ))}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+            {SUGESTOES.map((s, i) => (
+              <TouchableOpacity key={i} style={styles.sugestao} onPress={() => enviar(s)}>
+                <Text style={styles.sugestaoTexto}>{s}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
 
         <View style={styles.inputRow}>
@@ -162,9 +158,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#D9D9D9',
   },
-
   header: {
-    height: 60,
+    height: 65,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -173,7 +168,6 @@ const styles = StyleSheet.create({
     borderBottomColor: '#9BA7B1',
     gap: 12,
   },
-
   btnVoltar: {
     width: 38,
     height: 38,
@@ -182,14 +176,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-
+  headerInfo: {
+    flex: 1,
+    justifyContent: 'center',
+  },
   headerNome: {
     fontFamily: 'Homenaje_400Regular',
-    fontSize: 20,
+    fontSize: 24,
     color: '#111',
-    flex: 1,
+    lineHeight: 26,
   },
-
+  headerServico: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 16,
+    color: '#555',
+    marginTop: -2,
+  },
   btnEncerrar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -200,71 +202,58 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#D32F2F',
   },
-
   btnEncerrarTexto: {
     fontFamily: 'Homenaje_400Regular',
-    fontSize: 14,
+    fontSize: 16,
     color: '#D32F2F',
   },
-
   listaPadding: {
     paddingHorizontal: 16,
     paddingVertical: 12,
     gap: 8,
   },
-
   bolha: {
-    maxWidth: '70%',
+    maxWidth: '75%',
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 16,
     marginVertical: 4,
   },
-
   bolhaMinha: {
     alignSelf: 'flex-end',
     backgroundColor: BLUE,
     borderBottomRightRadius: 4,
   },
-
   bolhaDele: {
     alignSelf: 'flex-start',
     backgroundColor: '#EEE',
     borderBottomLeftRadius: 4,
   },
-
   bolhaTexto: {
-    fontSize: 15,
+    fontSize: 16,
     color: '#222',
     fontFamily: 'Homenaje_400Regular',
   },
-
   bolhaTextoMinha: {
     color: '#FFF',
   },
-
   sugestoesRow: {
-    flexDirection: 'row',
-    gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
-
   sugestao: {
     backgroundColor: '#EEE',
     borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderWidth: 1,
     borderColor: '#CCC',
   },
-
   sugestaoTexto: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#444',
     fontFamily: 'Homenaje_400Regular',
   },
-
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -274,29 +263,26 @@ const styles = StyleSheet.create({
     gap: 10,
     backgroundColor: '#D9D9D9',
   },
-
   input: {
     flex: 1,
-    height: 46,
+    height: 50,
     backgroundColor: '#EEE',
-    borderRadius: 23,
-    paddingHorizontal: 16,
-    fontSize: 15,
+    borderRadius: 25,
+    paddingHorizontal: 20,
+    fontSize: 16,
     color: '#333',
     borderWidth: 1,
     borderColor: '#CCC',
     fontFamily: 'Homenaje_400Regular',
   },
-
   btnEnviar: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: BLUE,
     justifyContent: 'center',
     alignItems: 'center',
   },
-
   btnEnviarDisabled: {
     backgroundColor: '#9BA7B1',
   },
