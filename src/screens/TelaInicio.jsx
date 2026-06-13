@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import LogoIcon from "../assets/icons/LogoIcon";
@@ -11,6 +11,7 @@ const BLUE_COLOR = '#076BDE';
 export default function TelaInicio({ navigation }) {
   const insets = useSafeAreaInsets();
   const [profissionais, setProfissionais] = useState([]);
+  const [textoBusca, setTextoBusca] = useState('');
 
   const categorias = [
     "Encanador",
@@ -68,10 +69,23 @@ export default function TelaInicio({ navigation }) {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}>
-        <TouchableOpacity style={styles.search} onPress={() => abrirBusca()} activeOpacity={0.75}>
+        <View style={styles.search}>
           <Ionicons name="search-outline" size={22} color="#555" />
-          <Text style={styles.searchPlaceholder}>O que você precisa?</Text>
-        </TouchableOpacity>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="O que você precisa?"
+            placeholderTextColor="#7A8A9E"
+            value={textoBusca}
+            onChangeText={setTextoBusca}
+            onSubmitEditing={() => {
+              if (textoBusca.trim().length > 0) {
+                abrirBusca(textoBusca.trim());
+                setTextoBusca('');
+              }
+            }}
+            returnKeyType="search"
+          />
+        </View>
 
         <View style={styles.tagsContainer}>
           {categorias.map((item, index) => (
@@ -86,7 +100,13 @@ export default function TelaInicio({ navigation }) {
             key={profissional.id}
             nome={profissional.nome}
             foto={profissional.foto}
-            onPress={() => console.log("Profissional selecionado:", profissional.id)}
+            onPress={() =>
+              navigation.navigate('TelaPerfilProfissional', {
+                profissionalId: profissional.id,
+                profissionalNome: profissional.nome,
+                profissionalFoto: profissional.foto,
+              })
+            }
           />
         ))}
       </ScrollView>
@@ -125,12 +145,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1, 
     shadowRadius: 3 
   },
-  searchPlaceholder: { 
+  searchInput: { 
     marginLeft: 10, 
     flex: 1, 
-    color: "#7A8A9E", 
+    color: "#333", 
     fontSize: 18, 
-    fontFamily: "Homenaje_400Regular" 
+    fontFamily: "Homenaje_400Regular",
+    paddingVertical: 0,
   },
   tagsContainer: { 
     marginTop: 15, 

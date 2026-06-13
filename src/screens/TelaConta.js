@@ -71,8 +71,8 @@ export default function TelaConta() {
           </TouchableOpacity>
         </View>
 
-        {/* Card de serviço ativo — substitui avaliação enquanto houver serviço */}
-        {servicoAtivo ? (
+        {/* Card de serviço ativo */}
+        {servicoAtivo && (
           <View style={styles.servicoAtivoCard}>
             {/* Indicador pulsante de status */}
             <View style={styles.servicoAtivoTopo}>
@@ -114,15 +114,6 @@ export default function TelaConta() {
                 <Text style={styles.btnCancelarServicoTexto}>Cancelar</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        ) : (
-          /* Card de avaliação — exibido normalmente quando não há serviço ativo */
-          <View style={styles.avaliacaoCard}>
-            <View>
-              <Text style={styles.nota}>4.8</Text>
-              <Text style={styles.subTexto}>Sua avaliação</Text>
-            </View>
-            <Text style={styles.totalAvaliacoes}>12 avaliações</Text>
           </View>
         )}
 
@@ -329,35 +320,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Homenaje_400Regular',
     fontSize: 16,
     color: '#D32F2F',
-  },
-
-  // ── Card avaliação (padrão sem serviço ativo) ───────────────────
-  avaliacaoCard: {
-    backgroundColor: '#EEF2EC',
-    borderRadius: 20,
-    paddingHorizontal: 22,
-    paddingVertical: 18,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-    marginHorizontal: 14,
-  },
-  nota: {
-    fontSize: 46,
-    fontFamily: 'Homenaje_400Regular',
-    fontWeight: 'bold',
-    color: '#2E7D32',
-  },
-  subTexto: {
-    fontSize: 19,
-    color: '#555',
-    fontFamily: 'Homenaje_400Regular',
-  },
-  totalAvaliacoes: {
-    fontSize: 19,
-    color: '#888',
-    fontFamily: 'Homenaje_400Regular',
   },
 
   // ── Histórico ───────────────────────────────────────────────────
