@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,10 +8,13 @@ import {
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
-import LogoIcon from '../assets/icons/LogoIcon';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import LogoIcon from "../assets/icons/LogoIcon";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { ProfissionalDestaque } from "../components/ProfissionalDestaque";
+import { supabase } from "../services/supabase";
 
 export default function TelaInicio({ navigation }) {
+  const [profissionais, setProfissionais] = useState([]);
 
   const categorias = [
     "Encanador",
@@ -21,19 +24,72 @@ export default function TelaInicio({ navigation }) {
     "Eletricista",
   ];
 
-  function abrirBusca(categoria = '') {
-    navigation.navigate('TelaInformarProblema', { categoria });
+  function abrirBusca(categoria = "") {
+    navigation.navigate("TelaInformarProblema", { categoria });
   }
 
-  return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+  async function carregarProfissionais() {
+    try {
+      
+      
+      const { data: usuarios, error } = await supabase
+        .from("usuarios")
+        .select("id, nome")
+        .eq("tipo", "profissional");
 
+
+      if (error) {
+        console.log("Erro ao buscar usuários:", error);
+        return;
+      }
+
+      const profissionaisAleatorios = [...usuarios]
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 5);
+
+      const ids = profissionaisAleatorios.map((p) => p.id);
+
+      const { data: documentos, error: erroDocumentos } = await supabase
+        .from("documentos_profissional")
+        .select("idprofissional, fotoperfilurl")
+        .in("idprofissional", ids);
+
+      if (erroDocumentos) {
+        console.log("Erro ao buscar fotos:", erroDocumentos);
+      }
+
+      const profissionaisFormatados = profissionaisAleatorios.map(
+        (profissional) => {
+          const documento = documentos?.find(
+            (doc) => doc.idprofissional === profissional.id,
+          );
+
+          return {
+            ...profissional,
+            foto: documento?.fotoperfilurl || null,
+          };
+        },
+      );
+
+      setProfissionais(profissionaisFormatados);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+ 
+
+  useEffect(() => {
+    carregarProfissionais();
+  }, []);
+
+  return (
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
         <LogoIcon width={50} height={50} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-
         <TouchableOpacity
           style={styles.search}
           onPress={() => abrirBusca()}
@@ -55,24 +111,16 @@ export default function TelaInicio({ navigation }) {
           ))}
         </View>
 
-        {[1, 2, 3, 4, 5].map((item) => (
-          <TouchableOpacity
-            key={item}
-            style={styles.card}
-            onPress={() => abrirBusca()}
-          >
-            <View style={styles.userBox}>
-              <Ionicons name="person-outline" size={28} />
-            </View>
-
-            <Text style={styles.cardText}>
-              Profissional{"\n"}em destaque
-            </Text>
-
-            <Ionicons name="star" size={24} />
-          </TouchableOpacity>
+        {profissionais.map((profissional) => (
+          <ProfissionalDestaque
+            key={profissional.id}
+            nome={profissional.nome}
+            foto={profissional.foto}
+            onPress={() =>
+              console.log("Profissional selecionado:", profissional.id)
+            }
+          />
         ))}
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -87,11 +135,11 @@ const styles = StyleSheet.create({
   header: {
     height: 82,
     borderBottomWidth: 1,
-    borderBottomColor: '#9BA7B1',
-    alignItems: 'flex-end',
-    justifyContent: 'center',
+    borderBottomColor: "#9BA7B1",
+    alignItems: "flex-end",
+    justifyContent: "center",
     paddingRight: 16,
-    backgroundColor: '#D9D9D9',
+    backgroundColor: "#D9D9D9",
   },
 
   search: {
@@ -109,9 +157,9 @@ const styles = StyleSheet.create({
   searchPlaceholder: {
     marginLeft: 10,
     flex: 1,
-    color: '#999',
+    color: "#999",
     fontSize: 14,
-    fontFamily: 'Homenaje_400Regular',
+    fontFamily: "Homenaje_400Regular",
   },
 
   tagsContainer: {
@@ -133,34 +181,6 @@ const styles = StyleSheet.create({
 
   tagText: {
     color: "#666",
-    fontFamily: 'Homenaje_400Regular',
-  },
-
-  card: {
-    width: "75%",
-    height: 70,
-    alignSelf: "center",
-    marginTop: 18,
-    borderWidth: 2,
-    borderRadius: 27,
-    backgroundColor: "#EEE",
-    paddingHorizontal: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
-  userBox: {
-    height: 55,
-    width: 55,
-    borderWidth: 2,
-    borderRadius: 18,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  cardText: {
-    fontSize: 24,
-    fontFamily: 'Homenaje_400Regular',
+    fontFamily: "Homenaje_400Regular",
   },
 });

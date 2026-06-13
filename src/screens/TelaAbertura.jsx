@@ -4,7 +4,7 @@ import LogoIcon from '../assets/icons/LogoIcon';
 
 const BACKGROUND_COLOR = '#076BDE'; 
 
-export default function TelaAbertura({ navigation }) {
+export default function TelaAbertura() {
   
 
   return (
