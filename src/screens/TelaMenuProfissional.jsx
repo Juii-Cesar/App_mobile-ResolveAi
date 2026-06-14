@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Modal, TextInput, ActivityIndicator, Alert, Image, Switch } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Modal, TextInput, ActivityIndicator, Image, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
@@ -32,10 +32,16 @@ export default function TelaMenuProfissional({ navigation }) {
   const [ganhosSemanais, setGanhosSemanais] = useState(0);
   const [novaProfissao, setNovaProfissao] = useState('');
   const [tempoExperiencia, setTempoExperiencia] = useState('');
-  const [certificadoUri, setCertificadoUri] = useState(null); 
+  const [certificadoUri, setCertificadoUri] = useState(null);
   const [salvando, setSalvando] = useState(false);
   const [raio, setRaio] = useState(15);
   const [notificacoesAtivas, setNotificacoesAtivas] = useState(true);
+
+  const [modalAviso, setModalAviso] = useState({ visible: false, titulo: '', mensagem: '', tipo: 'default' });
+  const [modalConfirmar, setModalConfirmar] = useState({ visible: false, titulo: '', mensagem: '', onConfirmar: null });
+
+  const fecharAviso = () => setModalAviso({ visible: false, titulo: '', mensagem: '', tipo: 'default' });
+  const fecharConfirmar = () => setModalConfirmar({ visible: false, titulo: '', mensagem: '', onConfirmar: null });
 
   useFocusEffect(
     useCallback(() => {
@@ -56,9 +62,7 @@ export default function TelaMenuProfissional({ navigation }) {
       }
 
       const { data: locData } = await supabase.from('localizacoes_profissional').select('raio_atendimento').eq('idprofissional', user.id).maybeSingle();
-      if (locData && locData.raio_atendimento) {
-        setRaio(locData.raio_atendimento);
-      }
+      if (locData && locData.raio_atendimento) setRaio(locData.raio_atendimento);
 
       const { data: docsData } = await supabase.from('documentos_profissional').select('fotoperfilurl').eq('idprofissional', user.id).single();
       if (docsData && docsData.fotoperfilurl) setFotoPerfil(docsData.fotoperfilurl);
@@ -72,10 +76,10 @@ export default function TelaMenuProfissional({ navigation }) {
       const { data: fixadosData } = await supabase.from('avaliacoes').select('id, comentario, cliente:usuarios!idcliente(nome)').eq('idprofissional', user.id).eq('fixado', true).limit(2);
       if (fixadosData) setComentariosFixados(fixadosData);
 
-      const { data: financeirosData } = await supabase.from('servicos').select('valor, criadoem').eq('idprofissional', user.id).eq('status', 'concluido'); 
+      const { data: financeirosData } = await supabase.from('servicos').select('valor, criadoem').eq('idprofissional', user.id).eq('status', 'concluido');
       if (financeirosData) {
         let total = 0; let semanal = 0;
-        const hoje = new Date(); const umaSemanaAtras = new Date(); umaSemanaAtras.setDate(hoje.getDate() - 7); 
+        const hoje = new Date(); const umaSemanaAtras = new Date(); umaSemanaAtras.setDate(hoje.getDate() - 7);
         financeirosData.forEach(servico => {
           const valorServico = parseFloat(servico.valor) || 0;
           total += valorServico;
@@ -84,7 +88,7 @@ export default function TelaMenuProfissional({ navigation }) {
         });
         setGanhosTotais(total); setGanhosSemanais(semanal);
       }
-    } catch (error) { console.log("Erro ao carregar dados:", error.message); } 
+    } catch (error) { console.log("Erro ao carregar dados:", error.message); }
     finally { setCarregando(false); }
   }
 
@@ -97,17 +101,17 @@ export default function TelaMenuProfissional({ navigation }) {
 
       const { error } = await supabase
         .from('localizacoes_profissional')
-        .upsert({ 
-          idprofissional: user.id, 
-          raio_atendimento: Math.round(raio) 
+        .upsert({
+          idprofissional: user.id,
+          raio_atendimento: Math.round(raio)
         }, { onConflict: 'idprofissional' });
 
       if (error) throw error;
-      
-      Alert.alert('Sucesso', `Raio de atendimento salvo: ${Math.round(raio)} KM`);
+
       setModalConfig(null);
+      setModalAviso({ visible: true, titulo: 'Sucesso', mensagem: `Raio de atendimento salvo: ${Math.round(raio)} KM`, tipo: 'default' });
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível salvar o raio de atendimento.');
+      setModalAviso({ visible: true, titulo: 'Erro', mensagem: 'Não foi possível salvar o raio de atendimento.', tipo: 'danger' });
       console.log(error);
     } finally {
       setSalvando(false);
@@ -118,11 +122,16 @@ export default function TelaMenuProfissional({ navigation }) {
     try {
       const result = await DocumentPicker.getDocumentAsync({ type: ['application/pdf', 'image/*'], copyToCacheDirectory: true });
       if (!result.canceled) setCertificadoUri(result.assets[0].uri);
-    } catch (error) { Alert.alert('Erro', 'Não foi possível selecionar o documento.'); }
+    } catch (error) {
+      setModalAviso({ visible: true, titulo: 'Erro', mensagem: 'Não foi possível selecionar o documento.', tipo: 'danger' });
+    }
   }
 
   async function handleSalvarEspecialidade() {
-    if (!novaProfissao.trim()) { Alert.alert('Atenção', 'Preencha a profissão.'); return; }
+    if (!novaProfissao.trim()) {
+      setModalAviso({ visible: true, titulo: 'Atenção', mensagem: 'Preencha a profissão.', tipo: 'default' });
+      return;
+    }
     setSalvando(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -136,7 +145,7 @@ export default function TelaMenuProfissional({ navigation }) {
         const { data: uploadData, error: uploadError } = await supabase.storage.from('documentos-sigilosos').upload(fileName, decode(base64), { contentType, upsert: true });
         if (uploadError) throw new Error("Erro no upload: " + uploadError.message);
         const { data: urlData } = supabase.storage.from('documentos-sigilosos').getPublicUrl(uploadData.path);
-        certificadoPath = urlData.publicUrl; 
+        certificadoPath = urlData.publicUrl;
       }
 
       const nomeLimpo = novaProfissao.trim();
@@ -152,20 +161,31 @@ export default function TelaMenuProfissional({ navigation }) {
         idDaProfissao = profCriada.id;
       }
 
-      const { error: insertError } = await supabase.from('profissoes_profissional').insert({ 
-        profissional_id: user.id, idprofissao: idDaProfissao, profissao: nomeLimpo, tempo_experiencia: tempoExperiencia.trim(), certificado_url: certificadoPath 
+      const { error: insertError } = await supabase.from('profissoes_profissional').insert({
+        profissional_id: user.id, idprofissao: idDaProfissao, profissao: nomeLimpo, tempo_experiencia: tempoExperiencia.trim(), certificado_url: certificadoPath
       });
       if (insertError) throw insertError;
 
       setEspecialidades(prev => [...prev, nomeLimpo]);
       fecharModalCancelando();
-      Alert.alert('Sucesso', 'Especialidade adicionada!');
-    } catch (error) { Alert.alert('Erro', 'Não foi possível salvar a especialidade.'); console.log(error); } 
+      setModalAviso({ visible: true, titulo: 'Sucesso', mensagem: 'Especialidade adicionada!', tipo: 'default' });
+    } catch (error) {
+      setModalAviso({ visible: true, titulo: 'Erro', mensagem: 'Não foi possível salvar a especialidade.', tipo: 'danger' });
+      console.log(error);
+    }
     finally { setSalvando(false); }
   }
 
   function confirmarRemocao(nomeEspecialidade) {
-    Alert.alert("Remover", `Deseja remover "${nomeEspecialidade}"?`, [{ text: "Cancelar", style: "cancel" }, { text: "Remover", style: "destructive", onPress: () => removerEspecialidade(nomeEspecialidade) }]);
+    setModalConfirmar({
+      visible: true,
+      titulo: 'Remover',
+      mensagem: `Deseja remover "${nomeEspecialidade}"?`,
+      onConfirmar: () => {
+        fecharConfirmar();
+        removerEspecialidade(nomeEspecialidade);
+      }
+    });
   }
 
   async function removerEspecialidade(nomeEspecialidade) {
@@ -174,12 +194,24 @@ export default function TelaMenuProfissional({ navigation }) {
       const { error } = await supabase.from('profissoes_profissional').delete().match({ profissional_id: user.id, profissao: nomeEspecialidade });
       if (error) throw error;
       setEspecialidades(prev => prev.filter(esp => esp !== nomeEspecialidade));
-    } catch (error) { Alert.alert("Erro", "Falha ao remover."); }
+    } catch (error) {
+      setModalAviso({ visible: true, titulo: 'Erro', mensagem: 'Falha ao remover.', tipo: 'danger' });
+    }
   }
 
   function fecharModalCancelando() { setNovaProfissao(''); setTempoExperiencia(''); setCertificadoUri(null); setModalVisivel(false); }
-  
-  const handleLogout = () => { Alert.alert("Sair", "Tem certeza?", [{text: "Cancelar", style: "cancel"}, {text: "Sair", style: "destructive", onPress: async () => await logout()}]); };
+
+  const handleLogout = () => {
+    setModalConfirmar({
+      visible: true,
+      titulo: 'Sair',
+      mensagem: 'Tem certeza que deseja sair da conta?',
+      onConfirmar: async () => {
+        fecharConfirmar();
+        await logout();
+      }
+    });
+  };
 
   if (carregando) return <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}><ActivityIndicator size="large" color={BLUE_COLOR} /></View>;
 
@@ -215,64 +247,71 @@ export default function TelaMenuProfissional({ navigation }) {
           <Text style={styles.cardSubtitle}>Comentários Fixados</Text>
           <View style={styles.comentariosRow}>
             {comentariosFixados.length > 0 ? comentariosFixados.map(item => (
-                <View key={item.id} style={styles.boxComentario}><Text style={styles.autorText} numberOfLines={1}>{item.cliente?.nome}</Text><Text style={styles.comentarioCorpo} numberOfLines={2}>{item.comentario}</Text></View>
-              )) : <Text style={styles.textoVazioFixados}>Nenhum comentário fixado.</Text>}
+              <View key={item.id} style={styles.boxComentario}><Text style={styles.autorText} numberOfLines={1}>{item.cliente?.nome}</Text><Text style={styles.comentarioCorpo} numberOfLines={2}>{item.comentario}</Text></View>
+            )) : <Text style={styles.textoVazioFixados}>Nenhum comentário fixado.</Text>}
           </View>
         </TouchableOpacity>
 
         <View style={styles.card}>
-            <View style={styles.ganhosHeaderRow}><Text style={styles.cardTitle}>Ganhos</Text><Text style={styles.valorPrincipal}>{formatarMoeda(ganhosTotais)}</Text></View>
-            <Text style={styles.cardSubtitle}>Saldo semanal</Text>
-            <Text style={styles.valorSemanal}>{formatarMoeda(ganhosSemanais)}</Text>
-            <TouchableOpacity style={styles.btnSacar} onPress={() => Alert.alert('Sacar', 'Funcionalidade em desenvolvimento!')}><Text style={styles.btnSacarText}>Sacar</Text></TouchableOpacity>
+          <View style={styles.ganhosHeaderRow}><Text style={styles.cardTitle}>Ganhos</Text><Text style={styles.valorPrincipal}>{formatarMoeda(ganhosTotais)}</Text></View>
+          <Text style={styles.cardSubtitle}>Saldo semanal</Text>
+          <Text style={styles.valorSemanal}>{formatarMoeda(ganhosSemanais)}</Text>
+          <TouchableOpacity style={styles.btnSacar} onPress={() => setModalAviso({ visible: true, titulo: 'Sacar', mensagem: 'Funcionalidade em desenvolvimento!', tipo: 'default' })}>
+            <Text style={styles.btnSacarText}>Sacar</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.accordionContainer}>
-            <View style={[styles.botaoLista, espAberto && styles.botaoListaExpandido]}>
-                <TouchableOpacity style={styles.accordionHeader} onPress={() => setEspAberto(!espAberto)} activeOpacity={0.8}>
-                    <Text style={[styles.botaoListaText, espAberto && styles.textAzul]}>Minhas Especialidades</Text>
-                    <Ionicons name={espAberto ? "chevron-down" : "chevron-forward"} size={24} color={espAberto ? BLUE_COLOR : "#000"} />
+          <View style={[styles.botaoLista, espAberto && styles.botaoListaExpandido]}>
+            <TouchableOpacity style={styles.accordionHeader} onPress={() => setEspAberto(!espAberto)} activeOpacity={0.8}>
+              <Text style={[styles.botaoListaText, espAberto && styles.textAzul]}>Minhas Especialidades</Text>
+              <Ionicons name={espAberto ? "chevron-down" : "chevron-forward"} size={24} color={espAberto ? BLUE_COLOR : "#000"} />
+            </TouchableOpacity>
+            {espAberto && (
+              <View style={styles.accordionContent}>
+                {especialidades.length > 0 ? especialidades.map((esp, index) => (
+                  <View key={index} style={styles.linhaEspecialidade}>
+                    <Text style={styles.itemEspecialidade}>{esp}</Text>
+                    <TouchableOpacity onPress={() => confirmarRemocao(esp)} style={{ padding: 5 }}>
+                      <Ionicons name="trash-outline" size={22} color="#DE0707" />
+                    </TouchableOpacity>
+                  </View>
+                )) : <Text style={[styles.itemEspecialidade, { fontSize: 18, color: '#999' }]}>Nenhuma cadastrada</Text>}
+                <TouchableOpacity style={styles.btnAdicionar} onPress={() => setModalVisivel(true)}>
+                  <Ionicons name="add-circle-outline" size={24} color={BLUE_COLOR} />
                 </TouchableOpacity>
-                {espAberto && (
-                    <View style={styles.accordionContent}>
-                        {especialidades.length > 0 ? especialidades.map((esp, index) => (
-                            <View key={index} style={styles.linhaEspecialidade}><Text style={styles.itemEspecialidade}>{esp}</Text><TouchableOpacity onPress={() => confirmarRemocao(esp)} style={{ padding: 5 }}><Ionicons name="trash-outline" size={22} color="#DE0707" /></TouchableOpacity></View>
-                        )) : <Text style={[styles.itemEspecialidade, { fontSize: 18, color: '#999' }]}>Nenhuma cadastrada</Text>}
-                        <TouchableOpacity style={styles.btnAdicionar} onPress={() => setModalVisivel(true)}><Ionicons name="add-circle-outline" size={24} color={BLUE_COLOR} /></TouchableOpacity>
-                    </View>
-                )}
-            </View>
+              </View>
+            )}
+          </View>
 
-            <View style={[styles.botaoLista, configAberto && styles.botaoListaExpandido]}>
-                <TouchableOpacity style={styles.accordionHeader} onPress={() => setConfigAberto(!configAberto)} activeOpacity={0.8}>
-                    <Text style={[styles.botaoListaText, configAberto && styles.textAzul]}>Configurações</Text>
-                    <Ionicons name={configAberto ? "chevron-down" : "chevron-forward"} size={24} color={configAberto ? BLUE_COLOR : "#000"} />
-                </TouchableOpacity>
-                {configAberto && (
-                    <View style={styles.accordionContent}>
-                        <TouchableOpacity style={styles.opcoesConfigItem} onPress={() => setModalConfig('raio')}><Text style={styles.itemEspecialidade}>Raio de atendimento (KM)</Text></TouchableOpacity>
-                        <TouchableOpacity style={[styles.opcoesConfigItem, { borderBottomWidth: 0 }]} onPress={() => setModalConfig('notificacoes')}><Text style={styles.itemEspecialidade}>Notificações e Alertas</Text></TouchableOpacity>
-                        <TouchableOpacity style={[styles.opcoesConfigItem, { borderBottomWidth: 0, marginTop: 10 }]} onPress={handleLogout}><Text style={[styles.itemEspecialidade, { color: '#DE0707' }]}>Sair da conta</Text></TouchableOpacity>
-                    </View>
-                )}
-            </View>
+          <View style={[styles.botaoLista, configAberto && styles.botaoListaExpandido]}>
+            <TouchableOpacity style={styles.accordionHeader} onPress={() => setConfigAberto(!configAberto)} activeOpacity={0.8}>
+              <Text style={[styles.botaoListaText, configAberto && styles.textAzul]}>Configurações</Text>
+              <Ionicons name={configAberto ? "chevron-down" : "chevron-forward"} size={24} color={configAberto ? BLUE_COLOR : "#000"} />
+            </TouchableOpacity>
+            {configAberto && (
+              <View style={styles.accordionContent}>
+                <TouchableOpacity style={styles.opcoesConfigItem} onPress={() => setModalConfig('raio')}><Text style={styles.itemEspecialidade}>Raio de atendimento (KM)</Text></TouchableOpacity>
+                <TouchableOpacity style={[styles.opcoesConfigItem, { borderBottomWidth: 0 }]} onPress={() => setModalConfig('notificacoes')}><Text style={styles.itemEspecialidade}>Notificações e Alertas</Text></TouchableOpacity>
+                <TouchableOpacity style={[styles.opcoesConfigItem, { borderBottomWidth: 0, marginTop: 10 }]} onPress={handleLogout}><Text style={[styles.itemEspecialidade, { color: '#DE0707' }]}>Sair da conta</Text></TouchableOpacity>
+              </View>
+            )}
+          </View>
         </View>
       </ScrollView>
 
+      {/* Modal: Adicionar Especialidade */}
       <Modal animationType="fade" transparent={true} visible={modalVisivel} onRequestClose={fecharModalCancelando}>
         <TouchableOpacity style={styles.modalFundoOverlay} activeOpacity={1} onPress={fecharModalCancelando}>
           <View style={styles.modalCard} onStartShouldSetResponder={() => true}>
             <Text style={styles.modalTitle}>Adicionando Especialidades</Text>
-            
             <TextInput style={styles.modalInput} placeholder="Profissão" placeholderTextColor="#7A8A9E" value={novaProfissao} onChangeText={setNovaProfissao} />
             <TextInput style={styles.modalInput} placeholder="Tempo de experiência" placeholderTextColor="#7A8A9E" value={tempoExperiencia} onChangeText={setTempoExperiencia} keyboardType="numeric" />
-            
             <TouchableOpacity onPress={handleAnexarCertificado}>
               <Text style={[styles.linkAnexar, certificadoUri && { color: '#388E3C', textDecorationLine: 'none' }]}>
                 {certificadoUri ? 'Certificado anexado (Trocar)' : 'Anexar certificado'}
               </Text>
             </TouchableOpacity>
-            
             <View style={styles.modalBtnContainer}>
               {salvando ? (
                 <ActivityIndicator size="large" color={BLUE_COLOR} />
@@ -286,10 +325,10 @@ export default function TelaMenuProfissional({ navigation }) {
         </TouchableOpacity>
       </Modal>
 
+      {/* Modal: Configurações (raio / notificações) */}
       <Modal animationType="fade" transparent={true} visible={!!modalConfig} onRequestClose={() => setModalConfig(null)}>
         <TouchableOpacity style={styles.modalFundoOverlay} activeOpacity={1} onPress={() => setModalConfig(null)}>
           <View style={styles.modalCard} onStartShouldSetResponder={() => true}>
-            
             {modalConfig === 'raio' && (
               <>
                 <Text style={styles.modalTitle}>Raio de Atendimento</Text>
@@ -312,18 +351,50 @@ export default function TelaMenuProfissional({ navigation }) {
                 <Text style={styles.modalTitle}>Notificações</Text>
                 <View style={styles.linhaSwitch}>
                   <Text style={styles.textoSwitch}>Receber Alertas</Text>
-                  <Switch value={notificacoesAtivas} onValueChange={setNotificacoesAtivas} trackColor={{ false: '#7A8A9E', true: BLUE_COLOR }} thumbColor={'#FFF'}/>
+                  <Switch value={notificacoesAtivas} onValueChange={setNotificacoesAtivas} trackColor={{ false: '#7A8A9E', true: BLUE_COLOR }} thumbColor={'#FFF'} />
                 </View>
                 <View style={styles.modalBtnContainer}>
-                  <TouchableOpacity style={styles.modalBtnSalvar} onPress={() => { Alert.alert('Sucesso', 'Preferências salvas!'); setModalConfig(null); }}>
+                  <TouchableOpacity style={styles.modalBtnSalvar} onPress={() => { setModalConfig(null); setModalAviso({ visible: true, titulo: 'Sucesso', mensagem: 'Preferências salvas!', tipo: 'default' }); }}>
                     <Text style={styles.modalBtnSalvarText}>Salvar</Text>
                   </TouchableOpacity>
                 </View>
               </>
             )}
-
           </View>
         </TouchableOpacity>
+      </Modal>
+
+      {/* Modal: Aviso (sucesso / erro / atenção) */}
+      <Modal visible={modalAviso.visible} transparent animationType="fade" onRequestClose={fecharAviso}>
+        <View style={styles.overlay}>
+          <View style={styles.modalAvisoCard}>
+            <Text style={[styles.modalAvisoTitulo, modalAviso.tipo === 'danger' && styles.modalAvisoTituloDanger]}>
+              {modalAviso.titulo}:
+            </Text>
+            <Text style={styles.modalAvisoMensagem}>{modalAviso.mensagem}</Text>
+            <TouchableOpacity style={styles.btnAvisoOk} onPress={fecharAviso}>
+              <Text style={styles.btnAvisoOkTexto}>Ok</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal: Confirmação (remover / logout) */}
+      <Modal visible={modalConfirmar.visible} transparent animationType="fade" onRequestClose={fecharConfirmar}>
+        <View style={styles.overlay}>
+          <View style={styles.modalConfirmarCard}>
+            <Text style={styles.modalConfirmarTitulo}>{modalConfirmar.titulo}:</Text>
+            <Text style={styles.modalConfirmarMensagem}>{modalConfirmar.mensagem}</Text>
+            <View style={styles.modalConfirmarBotoes}>
+              <TouchableOpacity style={styles.btnSim} onPress={modalConfirmar.onConfirmar}>
+                <Text style={styles.btnSimTexto}>Sim</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.btnNao} onPress={fecharConfirmar}>
+                <Text style={styles.btnNaoTexto}>Não</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -378,5 +449,20 @@ const styles = StyleSheet.create({
   modalBtnSalvar: { backgroundColor: BLUE_COLOR, width: '100%', height: 55, borderRadius: 28, justifyContent: 'center', alignItems: 'center', borderWidth: 1.5, borderColor: '#333' },
   modalBtnSalvarText: { fontFamily: 'Homenaje_400Regular', fontSize: 26, color: '#FFF' },
   linhaSwitch: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: 30, paddingHorizontal: 10 },
-  textoSwitch: { fontFamily: 'Homenaje_400Regular', fontSize: 22, color: '#333' }
+  textoSwitch: { fontFamily: 'Homenaje_400Regular', fontSize: 22, color: '#333' },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' },
+  modalAvisoCard: { width: 280, backgroundColor: '#FFF', borderRadius: 20, padding: 20, elevation: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 5 },
+  modalAvisoTitulo: { fontFamily: 'Homenaje_400Regular', fontSize: 32, color: BLUE_COLOR, lineHeight: 34, marginBottom: 10 },
+  modalAvisoTituloDanger: { color: '#D32F2F' },
+  modalAvisoMensagem: { fontFamily: 'Homenaje_400Regular', fontSize: 22, color: '#111', lineHeight: 26, marginBottom: 22 },
+  btnAvisoOk: { width: '100%', height: 48, backgroundColor: BLUE_COLOR, borderRadius: 15, justifyContent: 'center', alignItems: 'center' },
+  btnAvisoOkTexto: { fontFamily: 'Homenaje_400Regular', fontSize: 22, color: '#FFF' },
+  modalConfirmarCard: { width: 280, backgroundColor: '#FFF', borderRadius: 20, padding: 20, elevation: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 5 },
+  modalConfirmarTitulo: { fontFamily: 'Homenaje_400Regular', fontSize: 32, color: BLUE_COLOR, lineHeight: 34, marginBottom: 10 },
+  modalConfirmarMensagem: { fontFamily: 'Homenaje_400Regular', fontSize: 22, color: '#111', lineHeight: 26, textAlign: 'center', marginBottom: 22 },
+  modalConfirmarBotoes: { flexDirection: 'row', justifyContent: 'space-between' },
+  btnSim: { width: 100, height: 40, backgroundColor: BLUE_COLOR, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
+  btnNao: { width: 100, height: 40, backgroundColor: '#A0A0A0', borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
+  btnSimTexto: { color: '#FFF', fontSize: 20, fontFamily: 'Homenaje_400Regular' },
+  btnNaoTexto: { color: '#FFF', fontSize: 20, fontFamily: 'Homenaje_400Regular' },
 });
