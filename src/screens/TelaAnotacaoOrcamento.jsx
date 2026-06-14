@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+
 import { supabase } from '../services/supabase';
 import { useServico } from '../context/ServicoContext';
 
@@ -63,7 +64,7 @@ export default function TelaAnotacaoOrcamento({ navigation, route }) {
         }).eq('id', servicoAtivo.id);
 
         if (error) {
-          Alert.alert('Erro', 'Não foi possível finalizar o serviço.');
+          Alert.alert('Erro', 'Não foi possível finalizar o serviço no banco de dados.');
           return;
         }
       }
@@ -71,7 +72,7 @@ export default function TelaAnotacaoOrcamento({ navigation, route }) {
       cancelarServico();
       Alert.alert(
         'Serviço Finalizado',
-        'O valor foi enviado ao cliente.',
+        'O valor foi enviado ao cliente com sucesso.',
         [{ text: 'OK', onPress: () => navigation.popToTop() }]
       );
     }
