@@ -16,7 +16,6 @@ import { useServico } from '../context/ServicoContext';
 import { supabase } from '../services/supabase';
 
 const BLUE = '#076BDE';
-
 const SUGESTOES = ['Olá', 'Está vindo ?'];
 
 export default function TelaChat({ navigation, route }) {
@@ -34,13 +33,7 @@ export default function TelaChat({ navigation, route }) {
   const flatRef = useRef(null);
 
   useEffect(() => {
-    iniciarServico({
-      profissionalNome,
-      profissionalId,
-      categoria,
-      descricao,
-      routeParams: route?.params ?? {},
-    });
+    iniciarServico({ profissionalNome, profissionalId, categoria, descricao, routeParams: route?.params ?? {} });
   }, []);
 
   useEffect(() => {
@@ -54,7 +47,6 @@ export default function TelaChat({ navigation, route }) {
         .from('servicos')
         .select('id, idcliente, idprofissional')
         .eq('idcliente', user.id)
-        .eq('status', 'servicoAceito')
         .order('criadoem', { ascending: false })
         .limit(1)
         .single();
@@ -63,7 +55,7 @@ export default function TelaChat({ navigation, route }) {
       if (!sId) return;
 
       let { data: salaChat } = await supabase.from('chats').select('id').eq('servico_id', sId).maybeSingle();
-
+      
       if (!salaChat) {
         const { data: novaSala, error } = await supabase.from('chats').insert({
           servico_id: sId,
@@ -81,7 +73,6 @@ export default function TelaChat({ navigation, route }) {
 
       const idDaSala = salaChat?.id;
       if (!idDaSala) return;
-      
       setChatId(idDaSala);
 
       const { data: antigas } = await supabase
@@ -101,6 +92,7 @@ export default function TelaChat({ navigation, route }) {
       channel = supabase.channel(`chat_${idDaSala}`)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_mensagens', filter: `chat_id=eq.${idDaSala}` }, 
           payload => {
+            console.log("CLIENTE RECEBEU MENSAGEM:", payload.new);
             const novaMsg = payload.new;
             if (novaMsg.remetente_id !== user.id) {
               setMensagens(prev => [...prev, {
@@ -110,11 +102,12 @@ export default function TelaChat({ navigation, route }) {
               }]);
             }
           }
-        ).subscribe();
+        ).subscribe((status) => {
+          console.log("STATUS DA INSCRIÇÃO DO CLIENTE NO CHAT:", status);
+        });
     }
 
     iniciarChat();
-
     return () => { if (channel) supabase.removeChannel(channel); };
   }, []);
 
@@ -130,37 +123,27 @@ export default function TelaChat({ navigation, route }) {
     setMensagens(prev => [...prev, { id: tempId, texto: novaMensagem, minha: true }]);
     setTexto('');
 
-    await supabase.from('chat_mensagens').insert({
+    const { error } = await supabase.from('chat_mensagens').insert({
       chat_id: chatId,
       remetente_id: userId,
-      mensagem: novaMensagem
+      mensagem: novaMensagem,
+      visualizada: false
     });
+
+    if (error) console.log("ERRO AO ENVIAR MENSAGEM (CLIENTE):", error);
   }
 
   function handleEncerrar() {
-    Alert.alert(
-      'Encerrar serviço',
-      'Deseja realmente cancelar o serviço em andamento?',
-      [
-        { text: 'Não', style: 'cancel' },
-        {
-          text: 'Sim, cancelar',
-          style: 'destructive',
-          onPress: () => {
-            cancelarServico();
-            navigation.popToTop();
-          },
-        },
-      ],
-    );
+    Alert.alert('Encerrar serviço', 'Deseja realmente cancelar o serviço em andamento?', [
+      { text: 'Não', style: 'cancel' },
+      { text: 'Sim, cancelar', style: 'destructive', onPress: () => { cancelarServico(); navigation.popToTop(); } },
+    ]);
   }
 
   function renderMensagem({ item }) {
     return (
       <View style={[styles.bolha, item.minha ? styles.bolhaMinha : styles.bolhaDele]}>
-        <Text style={[styles.bolhaTexto, item.minha && styles.bolhaTextoMinha]}>
-          {item.texto}
-        </Text>
+        <Text style={[styles.bolhaTexto, item.minha && styles.bolhaTextoMinha]}>{item.texto}</Text>
       </View>
     );
   }
@@ -171,63 +154,25 @@ export default function TelaChat({ navigation, route }) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.btnVoltar}>
           <Ionicons name="arrow-back" size={24} color="#FFF" />
         </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.headerNomeArea}
-          onPress={() =>
-            navigation.navigate('TelaPerfilProfissional', {
-              profissionalId,
-              profissionalNome,
-            })
-          }
-        >
+        <TouchableOpacity style={styles.headerNomeArea} onPress={() => navigation.navigate('TelaPerfilProfissional', { profissionalId, profissionalNome })}>
           <Text style={styles.headerNome}>{profissionalNome}</Text>
           <Ionicons name="information-circle-outline" size={16} color="#555" />
         </TouchableOpacity>
-
         <TouchableOpacity onPress={handleEncerrar} style={styles.btnEncerrar}>
           <Ionicons name="close-circle-outline" size={20} color="#D32F2F" />
           <Text style={styles.btnEncerrarTexto}>Encerrar</Text>
         </TouchableOpacity>
       </View>
-
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={60}
-      >
-        <FlatList
-          ref={flatRef}
-          data={mensagens}
-          keyExtractor={item => item.id}
-          renderItem={renderMensagem}
-          contentContainerStyle={styles.listaPadding}
-          showsVerticalScrollIndicator={false}
-        />
-
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={60}>
+        <FlatList ref={flatRef} data={mensagens} keyExtractor={item => item.id} renderItem={renderMensagem} contentContainerStyle={styles.listaPadding} showsVerticalScrollIndicator={false} />
         <View style={styles.sugestoesRow}>
           {SUGESTOES.map((s, i) => (
-            <TouchableOpacity key={i} style={styles.sugestao} onPress={() => enviar(s)}>
-              <Text style={styles.sugestaoTexto}>{s}</Text>
-            </TouchableOpacity>
+            <TouchableOpacity key={i} style={styles.sugestao} onPress={() => enviar(s)}><Text style={styles.sugestaoTexto}>{s}</Text></TouchableOpacity>
           ))}
         </View>
-
         <View style={styles.inputRow}>
-          <TextInput
-            style={styles.input}
-            placeholder="Mensagem..."
-            placeholderTextColor="#AAA"
-            value={texto}
-            onChangeText={setTexto}
-            onSubmitEditing={() => enviar()}
-            returnKeyType="send"
-          />
-          <TouchableOpacity
-            style={[styles.btnEnviar, !texto.trim() && styles.btnEnviarDisabled]}
-            onPress={() => enviar()}
-            disabled={!texto.trim()}
-          >
+          <TextInput style={styles.input} placeholder="Mensagem..." placeholderTextColor="#AAA" value={texto} onChangeText={setTexto} onSubmitEditing={() => enviar()} returnKeyType="send" />
+          <TouchableOpacity style={[styles.btnEnviar, !texto.trim() && styles.btnEnviarDisabled]} onPress={() => enviar()} disabled={!texto.trim()}>
             <Ionicons name="send" size={18} color="#FFF" />
           </TouchableOpacity>
         </View>

@@ -27,7 +27,6 @@ export default function TelaPrincipalProfissional({ navigation }) {
   const insets = useSafeAreaInsets();
   const [mostrandoFiltros, setMostrandoFiltros] = useState(false);
   const [online, setOnline] = useState(false);
-  const [modalVisivel, setModalVisivel] = useState(false);
   const [location, setLocation] = useState(null);
   const [modalBuscaVisivel, setModalBuscaVisivel] = useState(false);
   const [textoBusca, setTextoBusca] = useState('');
@@ -35,9 +34,8 @@ export default function TelaPrincipalProfissional({ navigation }) {
   const [profissoes, setProfissoes] = useState([]);
   const [profissaoSelecionada, setProfissaoSelecionada] = useState('');
   const [dropdownAberto, setDropdownAberto] = useState(false);
-  const [dadosChamado, setDadosChamado] = useState(null);
-  
   const [filaServicos, setFilaServicos] = useState([]);
+  const [servicoAtivo, setServicoAtivo] = useState(null);
 
   const [historicoRecente, setHistoricoRecente] = useState([
     { id: 'h1', titulo: 'Casa', subtitulo: 'Definir local', icone: 'home-outline', tipo: 'fixo' },
@@ -63,29 +61,47 @@ export default function TelaPrincipalProfissional({ navigation }) {
 
   useFocusEffect(
     useCallback(() => {
-      async function carregarProfissoes() {
+      async function carregarDadosIniciais() {
         try {
           const { data: { user } } = await supabase.auth.getUser();
           if (!user) return;
 
-          const { data } = await supabase
+          const { data: dataProfissoes } = await supabase
             .from('profissoes_profissional')
             .select('profissao')
             .eq('profissional_id', user.id);
 
-          if (data && data.length > 0) {
-            const listaProfissoes = data.map(item => item.profissao);
+          if (dataProfissoes && dataProfissoes.length > 0) {
+            const listaProfissoes = dataProfissoes.map(item => item.profissao);
             setProfissoes(listaProfissoes);
             setProfissaoSelecionada(prev => prev || listaProfissoes[0]); 
           } else {
             setProfissoes([]);
             setProfissaoSelecionada('');
           }
+
+          const { data: dataAtivo } = await supabase
+            .from('servicos')
+            .select('id, descricao, cliente:usuarios!idcliente(nome)')
+            .eq('idprofissional', user.id)
+            .eq('status', 'servicoAceito')
+            .maybeSingle();
+
+          if (dataAtivo) {
+            setServicoAtivo({
+              id: dataAtivo.id,
+              nomeCliente: dataAtivo.cliente?.nome || 'Cliente',
+              descricao: dataAtivo.descricao
+            });
+          } else {
+            setServicoAtivo(null);
+          }
+
         } catch (error) {
-          console.log("Erro ao buscar profissões:", error);
+          console.log("Erro ao carregar dados iniciais:", error);
         }
       }
-      carregarProfissoes();
+      carregarDadosIniciais();
     }, [])
   );
 
@@ -110,7 +126,7 @@ export default function TelaPrincipalProfissional({ navigation }) {
 
       const { data: profData } = await supabase.from('profissoes').select('id').ilike('nome', profissaoSelecionada).maybeSingle();
       if (!profData) return;
-
+      
       const { data: pendentes } = await supabase
         .from('servicos')
         .select('id, descricao, cliente:usuarios!idcliente(nome)')
@@ -172,8 +188,9 @@ export default function TelaPrincipalProfissional({ navigation }) {
     if (!error) {
       setOnline(false);
       setFilaServicos([]); 
+      setServicoAtivo(servico);
       navigation.navigate('TelaChatProfissional', {
-        clienteNome: servico.nomeCliente,
+        profissionalNome: servico.nomeCliente,
         dadosServico: servico,
       });
     } else {
@@ -253,7 +270,6 @@ export default function TelaPrincipalProfissional({ navigation }) {
   const alturaBase = 190;
   const alturaFiltro = 240;
   const alturaFiltroAberto = 380; 
-  
   const alturaCaixa = !mostrandoFiltros ? alturaBase : (dropdownAberto ? alturaFiltroAberto : alturaFiltro);
   const espacoExtraBotao = insets.bottom > 0 ? insets.bottom : 15;
 
@@ -272,12 +288,28 @@ export default function TelaPrincipalProfissional({ navigation }) {
       </MapView>
 
       <View style={[styles.camadaSobreposicao, { paddingTop: insets.top }]} pointerEvents="box-none">
-        
-        <View style={styles.headerFlutuante} pointerEvents="box-none">
-          <View style={{ flex: 1 }} /> 
-          <TouchableOpacity style={styles.botaoFlutuanteRedondo} onPress={() => setModalBuscaVisivel(true)}>
+
+        <View style={[styles.headerFlutuante, { justifyContent: servicoAtivo ? 'space-between' : 'flex-end' }]} pointerEvents="box-none">
+          
+          {servicoAtivo && (
+            <TouchableOpacity 
+              style={styles.botaoFlutuanteRedondo} 
+              onPress={() => navigation.navigate('TelaChatProfissional', {
+                profissionalNome: servicoAtivo.nomeCliente,
+                dadosServico: servicoAtivo,
+              })}
+            >
+              <Ionicons name="chatbubbles-outline" size={26} color="#FFF" />
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity 
+            style={styles.botaoFlutuanteRedondo} 
+            onPress={() => setModalBuscaVisivel(true)}
+          >
             <Ionicons name="search-outline" size={26} color="#FFF" />
           </TouchableOpacity>
+
         </View>
 
         <View style={{ flex: 1 }} pointerEvents="none" />
@@ -348,7 +380,7 @@ export default function TelaPrincipalProfissional({ navigation }) {
               <Feather name="sliders" size={28} color="#000" />
             </TouchableOpacity>
             
-            <TouchableOpacity style={[styles.botaoIniciar, online && styles.botaoIniciarOnline]} onPress={handleIniciar}>
+            <TouchableOpacity style={[styles.botaoIniciar, online && styles.botaoIniciarOnline]} onPress={online ? () => setOnline(false) : handleIniciar}>
               <Text style={styles.textoBotaoIniciar}>{online ? 'Parar' : 'Iniciar'}</Text>
             </TouchableOpacity>
             
@@ -418,7 +450,7 @@ export default function TelaPrincipalProfissional({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#DBDBDB' },
   camadaSobreposicao: { flex: 1, justifyContent: 'space-between' },
-  headerFlutuante: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 20, paddingTop: 10 },
+  headerFlutuante: { flexDirection: 'row', paddingHorizontal: 20, paddingTop: 10 },
   botaoFlutuanteRedondo: { backgroundColor: BLUE_COLOR, width: 52, height: 52, borderRadius: 26, justifyContent: 'center', alignItems: 'center', elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 3 },
 
   abaStatusContainer: { backgroundColor: '#EAEAEA', borderTopLeftRadius: 45, borderTopRightRadius: 45, paddingHorizontal: 30, paddingTop: 12, alignItems: 'center', elevation: 15, shadowColor: '#000', shadowOffset: { width: 0, height: -5 }, shadowOpacity: 0.2, shadowRadius: 10 },
