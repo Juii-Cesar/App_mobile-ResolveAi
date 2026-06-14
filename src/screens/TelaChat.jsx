@@ -25,7 +25,9 @@ export default function TelaChat({ navigation, route }) {
   const profissionalId   = route?.params?.profissionalId   ?? 'default';
   const categoria        = route?.params?.categoria        ?? '';
   const descricao        = route?.params?.descricao        ?? '';
+  
   const { iniciarServico, finalizarServico } = useServico();
+  
   const [mensagens, setMensagens] = useState([]);
   const [texto, setTexto] = useState('');
   const [chatId, setChatId] = useState(null);
@@ -35,13 +37,15 @@ export default function TelaChat({ navigation, route }) {
   const flatRef = useRef(null);
 
   useEffect(() => {
-    iniciarServico({
-      profissionalNome,
-      profissionalId,
-      categoria,
-      descricao,
-      routeParams: route?.params ?? {},
-    });
+    if (iniciarServico) {
+      iniciarServico({
+        profissionalNome,
+        profissionalId,
+        categoria,
+        descricao,
+        routeParams: route?.params ?? {},
+      });
+    }
   }, []);
 
   useEffect(() => {
@@ -166,7 +170,6 @@ export default function TelaChat({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-
       <Modal visible={!!servicoFinalizado} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
@@ -179,8 +182,12 @@ export default function TelaChat({ navigation, route }) {
             <TouchableOpacity 
               style={styles.btnPagar} 
               onPress={() => {
-                finalizarServico();
-                Alert.alert('Pagamento', 'Função em desenvolvimento.', [
+                if (finalizarServico) {
+                  finalizarServico();
+                } else {
+                  console.log("Aviso: finalizarServico ainda não foi criada no ServicoContext.");
+                }
+                Alert.alert('Pagamento', 'Funcionalidade em desenvolvimento 🚧', [
                   { text: 'OK', onPress: () => navigation.popToTop() }
                 ]);
               }}
@@ -208,7 +215,6 @@ export default function TelaChat({ navigation, route }) {
           <Text style={styles.headerNome}>{profissionalNome}</Text>
           <Ionicons name="information-circle-outline" size={16} color="#555" />
         </TouchableOpacity>
-
 
       </View>
 
@@ -271,7 +277,6 @@ const styles = StyleSheet.create({
   btnVoltar: { width: 38, height: 38, borderRadius: 19, backgroundColor: BLUE, justifyContent: 'center', alignItems: 'center' },
   headerNomeArea: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 5 },
   headerNome: { fontFamily: 'Homenaje_400Regular', fontSize: 20, color: '#111' },
-
   listaPadding: { paddingHorizontal: 16, paddingVertical: 12, gap: 8 },
   bolha: { maxWidth: '70%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, marginVertical: 4 },
   bolhaMinha: { alignSelf: 'flex-end', backgroundColor: BLUE, borderBottomRightRadius: 4 },

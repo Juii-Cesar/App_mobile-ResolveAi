@@ -13,8 +13,12 @@ export function ServicoProvider({ children }) {
     setServicoAtivo(null);
   }
 
+  function finalizarServico() {
+    setServicoAtivo(null);
+  }
+
   return (
-    <ServicoContext.Provider value={{ servicoAtivo, iniciarServico, cancelarServico }}>
+    <ServicoContext.Provider value={{ servicoAtivo, iniciarServico, cancelarServico, finalizarServico }}>
       {children}
     </ServicoContext.Provider>
   );

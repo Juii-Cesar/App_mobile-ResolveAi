@@ -12,6 +12,9 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../../services/supabase";
 
+const BLUE_COLOR = '#076BDE';
+const CARD_BG = '#EAEAEA';
+
 function Estrelas({ avaliacao, onPress, disabled }) {
   return (
     <View style={styles.estrelasContainer}>
@@ -20,11 +23,12 @@ function Estrelas({ avaliacao, onPress, disabled }) {
           key={n}
           disabled={disabled}
           onPress={() => onPress(n)}
+          activeOpacity={0.7}
         >
           <Ionicons
             name={n <= avaliacao ? "star" : "star-outline"}
-            size={18}
-            color={n <= avaliacao ? "#F5A623" : "#999"}
+            size={22}
+            color={n <= avaliacao ? "#F5A623" : "#A0A8B0"}
           />
         </TouchableOpacity>
       ))}
@@ -50,7 +54,7 @@ export const CardServico = ({
   async function enviarAvaliacao() {
     try {
       if (avaliacao === 0) {
-        Alert.alert("Avaliação", "Selecione uma nota.");
+        Alert.alert("Avaliação", "Selecione uma nota com as estrelas.");
         return;
       }
 
@@ -74,9 +78,10 @@ export const CardServico = ({
           avaliado: true,
         })
         .eq("id", servicoId);
-        setFoiAvaliado(true);
+        
+      setFoiAvaliado(true);
 
-      Alert.alert("Sucesso", "Avaliação enviada com sucesso.");
+      Alert.alert("Sucesso", "Avaliação enviada com sucesso!");
     } catch (error) {
       console.log(error);
       Alert.alert("Erro", "Não foi possível enviar a avaliação.");
@@ -92,13 +97,13 @@ export const CardServico = ({
           {fotoPerfil ? (
             <Image source={{ uri: fotoPerfil }} style={styles.avatarImagem} />
           ) : (
-            <Ionicons name="person-outline" size={24} color="#555" />
+            <Ionicons name="person-outline" size={30} color="#555" />
           )}
         </View>
 
         <View style={styles.cardInfo}>
-          <Text style={styles.cardNome}>{nome}</Text>
-          <Text style={styles.cardProfissao}>{profissao}</Text>
+          <Text numberOfLines={1} style={styles.cardNome}>{nome}</Text>
+          <Text numberOfLines={1} style={styles.cardProfissao}>{profissao}</Text>
         </View>
 
         <Estrelas
@@ -110,16 +115,17 @@ export const CardServico = ({
 
       <TextInput
         editable={!foiAvaliado}
-        style={styles.comentarioInput}
-        placeholder="Comentário..."
-        placeholderTextColor="#999"
+        style={[styles.comentarioInput, foiAvaliado && styles.comentarioDesativado]}
+        placeholder="Deixe um comentário sobre o serviço..."
+        placeholderTextColor="#7A8A9E"
         value={comentario}
         onChangeText={setComentario}
+        multiline
       />
 
       {!foiAvaliado && (
-        <TouchableOpacity style={styles.botao} onPress={enviarAvaliacao}>
-          <Text style={styles.botaoTexto}>Enviar avaliação</Text>
+        <TouchableOpacity style={styles.botao} onPress={enviarAvaliacao} activeOpacity={0.8}>
+          <Text style={styles.botaoTexto}>Enviar Avaliação</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -128,81 +134,92 @@ export const CardServico = ({
 
 const styles = StyleSheet.create({
   card: {
-    width: "78%",
-    alignSelf: "center",
-    backgroundColor: "#ECECEC",
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: "#222",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    width: "100%",
+    backgroundColor: CARD_BG,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: "#D3D3D3",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-
   dataServico: {
+    fontFamily: 'Homenaje_400Regular',
     fontSize: 16,
+    color: '#7A8A9E',
     textAlign: "right",
-    marginBottom: 8,
+    marginBottom: 6,
+    marginTop: -4,
   },
-
   cardMeio: {
     flexDirection: "row",
     alignItems: "center",
   },
-
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 2,
-    borderColor: "#222",
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 1.5,
+    borderColor: "#000",
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E6ECF2",
+    backgroundColor: "#D1D7DC",
     marginRight: 12,
   },
-
   avatarImagem: {
     width: "100%",
     height: "100%",
+    resizeMode: "cover",
   },
-
   cardInfo: {
     flex: 1,
+    marginRight: 10,
   },
-
   cardNome: {
-    fontSize: 16,
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 24,
+    color: '#000',
+    lineHeight: 26,
   },
-
   cardProfissao: {
-    fontSize: 16,
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 18,
+    color: '#555',
+    marginTop: -2,
   },
-
   estrelasContainer: {
     flexDirection: "row",
-    gap: 2,
+    gap: 4,
   },
-
   comentarioInput: {
-    marginTop: 12,
-    borderWidth: 1,
-    borderColor: "#BEBEBE",
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    backgroundColor: "#DCDCDC",
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 20,
+    marginTop: 15,
+    borderWidth: 1.5,
+    borderColor: "#A8B7C1",
+    borderRadius: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    minHeight: 50,
+    backgroundColor: "#FFF",
+    color: "#333",
   },
-
+  comentarioDesativado: {
+    backgroundColor: '#D1D7DC',
+    color: '#555',
+  },
   botao: {
-    marginTop: 12,
-    backgroundColor: "#1565C0",
-    borderRadius: 20,
-    paddingVertical: 8,
+    marginTop: 15,
+    backgroundColor: BLUE_COLOR,
+    borderRadius: 25,
+    paddingVertical: 12,
+    borderWidth: 1.5,
+    borderColor: '#333',
+    alignItems: 'center',
   },
-
   botaoTexto: {
-    textAlign: "center",
+    fontFamily: 'Homenaje_400Regular',
     color: "#FFF",
-    fontWeight: "bold",
+    fontSize: 22,
   },
 });

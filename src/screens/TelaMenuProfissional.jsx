@@ -3,10 +3,11 @@ import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Modal, TextInput,
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import { File } from 'expo-file-system';
 import { decode } from 'base64-arraybuffer';
 import { useFocusEffect } from '@react-navigation/native';
 import Slider from '@react-native-community/slider';
+
 import LogoIcon from '../assets/icons/LogoIcon';
 import { logout } from "../services/auth";
 import { supabase } from '../services/supabase';
@@ -54,6 +55,11 @@ export default function TelaMenuProfissional({ navigation }) {
         if (usuarioData.avaliacaomedia) setAvaliacao(usuarioData.avaliacaomedia);
       }
 
+      const { data: locData } = await supabase.from('localizacoes_profissional').select('raio_atendimento').eq('idprofissional', user.id).maybeSingle();
+      if (locData && locData.raio_atendimento) {
+        setRaio(locData.raio_atendimento);
+      }
+
       const { data: docsData } = await supabase.from('documentos_profissional').select('fotoperfilurl').eq('idprofissional', user.id).single();
       if (docsData && docsData.fotoperfilurl) setFotoPerfil(docsData.fotoperfilurl);
 
@@ -84,98 +90,78 @@ export default function TelaMenuProfissional({ navigation }) {
 
   const formatarMoeda = (valor) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  async function handleAnexarCertificado() {
+  async function salvarRaioDeAtendimento() {
+    setSalvando(true);
     try {
-      const result = await DocumentPicker.getDocumentAsync({ 
-        type: ['application/pdf', 'image/jpeg', 'image/png'], 
-        copyToCacheDirectory: true 
-      });
-      if (!result.canceled) {
-        setCertificadoUri(result.assets[0].uri);
-      }
-    } catch (error) { 
-      Alert.alert('Erro', 'Não foi possível selecionar o documento.'); 
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const { error } = await supabase
+        .from('localizacoes_profissional')
+        .upsert({ 
+          idprofissional: user.id, 
+          raio_atendimento: Math.round(raio) 
+        }, { onConflict: 'idprofissional' });
+
+      if (error) throw error;
+      
+      Alert.alert('Sucesso', `Raio de atendimento salvo: ${Math.round(raio)} KM`);
+      setModalConfig(null);
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível salvar o raio de atendimento.');
+      console.log(error);
+    } finally {
+      setSalvando(false);
     }
   }
 
+  async function handleAnexarCertificado() {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({ type: ['application/pdf', 'image/*'], copyToCacheDirectory: true });
+      if (!result.canceled) setCertificadoUri(result.assets[0].uri);
+    } catch (error) { Alert.alert('Erro', 'Não foi possível selecionar o documento.'); }
+  }
+
   async function handleSalvarEspecialidade() {
-    if (!novaProfissao.trim()) { 
-      Alert.alert('Atenção', 'Preencha a profissão.'); 
-      return; 
-    }
-    
+    if (!novaProfissao.trim()) { Alert.alert('Atenção', 'Preencha a profissão.'); return; }
     setSalvando(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       let certificadoPath = null;
-
       if (certificadoUri) {
-        const base64 = await FileSystem.readAsStringAsync(certificadoUri, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-        
+        const localFile = new File(certificadoUri);
+        const base64 = await localFile.base64();
         const fileExt = certificadoUri.split('.').pop() || 'pdf';
         const fileName = `${user.id}/certificados/${Date.now()}.${fileExt}`;
         const contentType = fileExt === 'pdf' ? 'application/pdf' : `image/${fileExt}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('perfis_e_portfolios')
-          .upload(fileName, decode(base64), { contentType, upsert: true });
-          
+        const { data: uploadData, error: uploadError } = await supabase.storage.from('documentos-sigilosos').upload(fileName, decode(base64), { contentType, upsert: true });
         if (uploadError) throw new Error("Erro no upload: " + uploadError.message);
-        
-        const { data: urlData } = supabase.storage
-          .from('perfis_e_portfolios')
-          .getPublicUrl(uploadData.path);
-          
+        const { data: urlData } = supabase.storage.from('documentos-sigilosos').getPublicUrl(uploadData.path);
         certificadoPath = urlData.publicUrl; 
       }
 
       const nomeLimpo = novaProfissao.trim();
       let idDaProfissao = null;
-
-      const { data: profBusca, error: erroBusca } = await supabase
-        .from('profissoes')
-        .select('id')
-        .ilike('nome', nomeLimpo)
-        .maybeSingle();
-
+      const { data: profBusca, error: erroBusca } = await supabase.from('profissoes').select('id').ilike('nome', nomeLimpo).maybeSingle();
       if (erroBusca) throw erroBusca;
 
       if (profBusca) {
         idDaProfissao = profBusca.id;
       } else {
-        const { data: profCriada, error: erroCriar } = await supabase
-          .from('profissoes')
-          .insert({ nome: nomeLimpo })
-          .select('id')
-          .single();
-          
+        const { data: profCriada, error: erroCriar } = await supabase.from('profissoes').insert({ nome: nomeLimpo }).select('id').single();
         if (erroCriar) throw erroCriar;
         idDaProfissao = profCriada.id;
       }
 
-      const { error: insertError } = await supabase
-        .from('profissoes_profissional')
-        .insert({ 
-          profissional_id: user.id, 
-          idprofissao: idDaProfissao, 
-          profissao: nomeLimpo,
-          tempo_experiencia: tempoExperiencia.trim(), 
-          certificado_url: certificadoPath 
-        });
-
+      const { error: insertError } = await supabase.from('profissoes_profissional').insert({ 
+        profissional_id: user.id, idprofissao: idDaProfissao, profissao: nomeLimpo, tempo_experiencia: tempoExperiencia.trim(), certificado_url: certificadoPath 
+      });
       if (insertError) throw insertError;
 
       setEspecialidades(prev => [...prev, nomeLimpo]);
       fecharModalCancelando();
-      Alert.alert('Sucesso', 'Especialidade e certificado adicionados!');
-
-    } catch (error) { 
-      Alert.alert('Erro', 'Não foi possível salvar a especialidade.'); 
-      console.log(error);
-    } finally { 
-      setSalvando(false); 
-    }
+      Alert.alert('Sucesso', 'Especialidade adicionada!');
+    } catch (error) { Alert.alert('Erro', 'Não foi possível salvar a especialidade.'); console.log(error); } 
+    finally { setSalvando(false); }
   }
 
   function confirmarRemocao(nomeEspecialidade) {
@@ -278,22 +264,8 @@ export default function TelaMenuProfissional({ navigation }) {
           <View style={styles.modalCard} onStartShouldSetResponder={() => true}>
             <Text style={styles.modalTitle}>Adicionando Especialidades</Text>
             
-            <TextInput 
-              style={styles.modalInput} 
-              placeholder="Profissão" 
-              placeholderTextColor="#7A8A9E" 
-              value={novaProfissao} 
-              onChangeText={setNovaProfissao} 
-            />
-            
-            <TextInput 
-              style={styles.modalInput} 
-              placeholder="Tempo de experiência" 
-              placeholderTextColor="#7A8A9E" 
-              value={tempoExperiencia} 
-              onChangeText={setTempoExperiencia} 
-              keyboardType="numeric" 
-            />
+            <TextInput style={styles.modalInput} placeholder="Profissão" placeholderTextColor="#7A8A9E" value={novaProfissao} onChangeText={setNovaProfissao} />
+            <TextInput style={styles.modalInput} placeholder="Tempo de experiência" placeholderTextColor="#7A8A9E" value={tempoExperiencia} onChangeText={setTempoExperiencia} keyboardType="numeric" />
             
             <TouchableOpacity onPress={handleAnexarCertificado}>
               <Text style={[styles.linkAnexar, certificadoUri && { color: '#388E3C', textDecorationLine: 'none' }]}>
@@ -310,7 +282,6 @@ export default function TelaMenuProfissional({ navigation }) {
                 </TouchableOpacity>
               )}
             </View>
-
           </View>
         </TouchableOpacity>
       </Modal>
@@ -325,9 +296,13 @@ export default function TelaMenuProfissional({ navigation }) {
                 <Text style={{ fontSize: 24, fontWeight: 'bold', color: BLUE_COLOR, marginBottom: 10 }}>{Math.round(raio)} KM</Text>
                 <Slider style={{ width: 250, height: 40 }} minimumValue={1} maximumValue={100} step={1} minimumTrackTintColor={BLUE_COLOR} thumbTintColor={BLUE_COLOR} value={raio} onValueChange={(val) => setRaio(val)} />
                 <View style={[styles.modalBtnContainer, { marginTop: 20 }]}>
-                  <TouchableOpacity style={styles.modalBtnSalvar} onPress={() => { Alert.alert('Sucesso', `Raio ajustado para ${raio} KM`); setModalConfig(null); }}>
-                    <Text style={styles.modalBtnSalvarText}>Salvar</Text>
-                  </TouchableOpacity>
+                  {salvando ? (
+                    <ActivityIndicator size="large" color={BLUE_COLOR} />
+                  ) : (
+                    <TouchableOpacity style={styles.modalBtnSalvar} onPress={salvarRaioDeAtendimento}>
+                      <Text style={styles.modalBtnSalvarText}>Salvar</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               </>
             )}
@@ -355,325 +330,53 @@ export default function TelaMenuProfissional({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFF',
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 25,
-    paddingTop: 15,
-    gap: 15,
-  },
-  btnVoltarRedondo: {
-    backgroundColor: BLUE_COLOR,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 36,
-    color: '#000',
-  },
-  scrollContent: {
-    paddingHorizontal: 25,
-    paddingTop: 20,
-    gap: 15,
-    paddingBottom: 30,
-  },
-  card: {
-    backgroundColor: CARD_BG,
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1.5,
-    borderColor: '#D3D3D3',
-  },
-  perfilRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  avatarCirculo: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#D1D7DC',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#000',
-    overflow: 'hidden',
-  },
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  perfilInfo: {
-    marginLeft: 15,
-    flex: 1,
-  },
-  nomeText: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 32,
-    color: '#000',
-    lineHeight: 34,
-  },
-  bioText: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 18,
-    color: '#8A8A8A',
-    marginBottom: 5,
-  },
-  tagsRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  tagAzul: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: BLUE_COLOR,
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-  },
-  tagText: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 18,
-    color: '#FFF',
-  },
-  miniLogo: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-  },
-  cardTitle: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 26,
-    color: '#000',
-  },
-  cardSubtitle: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 14,
-    color: '#A0A0A0',
-    marginTop: -2,
-  },
-  comentariosRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
-    gap: 10,
-  },
-  boxComentario: {
-    flex: 1,
-    backgroundColor: '#D1D7DC',
-    borderRadius: 12,
-    padding: 10,
-    height: 60,
-    overflow: 'hidden',
-  },
-  autorText: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 14,
-    color: '#000',
-  },
-  comentarioCorpo: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 14,
-    color: '#8A8A8A',
-    marginTop: -2,
-  },
-  textoVazioFixados: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 16,
-    color: '#8A8A8A',
-    marginTop: 5,
-  },
-  ganhosHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  valorPrincipal: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 30,
-    color: BLUE_COLOR,
-  },
-  valorSemanal: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 20,
-    color: BLUE_COLOR,
-    marginTop: 2,
-  },
-  btnSacar: {
-    backgroundColor: BLUE_COLOR,
-    borderRadius: 15,
-    width: 95,
-    height: 32,
-    alignSelf: 'flex-end',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#000',
-    marginTop: -5,
-  },
-  btnSacarText: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 20,
-    color: '#FFF',
-  },
-  accordionContainer: {
-    gap: 12,
-    marginTop: 2,
-  },
-  botaoLista: {
-    backgroundColor: CARD_BG,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    borderColor: '#D3D3D3',
-    overflow: 'hidden',
-  },
-  botaoListaExpandido: {
-    paddingBottom: 10,
-  },
-  accordionHeader: {
-    height: 50,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  botaoListaText: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 24,
-    color: '#444',
-  },
-  textAzul: {
-    color: BLUE_COLOR,
-  },
-  accordionContent: {
-    paddingHorizontal: 40,
-    paddingTop: 2,
-    gap: 4,
-  },
-  linhaEspecialidade: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  itemEspecialidade: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 24,
-    color: '#555',
-  },
-  btnAdicionar: {
-    alignSelf: 'flex-start',
-    marginTop: 6,
-    marginLeft: -2,
-  },
-  opcoesConfigItem: {
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderColor: '#D1D7DC',
-    width: '100%',
-  },
-
-  modalFundoOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalCard: {
-    backgroundColor: '#EAEAEA',
-    width: '85%',
-    borderRadius: 30,
-    paddingHorizontal: 25,
-    paddingTop: 30,
-    paddingBottom: 30,
-    alignItems: 'center',
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-  },
-  modalTitle: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 36,
-    color: BLUE_COLOR,
-    textAlign: 'center',
-    lineHeight: 38,
-    marginBottom: 25,
-    width: '100%',
-  },
-  modalInput: {
-    backgroundColor: '#FFF',
-    width: '100%',
-    height: 55,
-    borderRadius: 15,
-    borderWidth: 1.5,
-    borderColor: '#333',
-    paddingHorizontal: 15,
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 22,
-    color: '#333',
-    marginBottom: 15,
-  },
-  linkAnexar: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 22,
-    color: BLUE_COLOR,
-    textDecorationLine: 'underline',
-    alignSelf: 'center',
-    marginTop: 5,
-    marginBottom: 25,
-  },
-  modalBtnContainer: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  modalBtnSalvar: {
-    backgroundColor: BLUE_COLOR,
-    width: '100%',
-    height: 55,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#333',
-  },
-  modalBtnSalvarText: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 26,
-    color: '#FFF',
-  },
-  modalInstrucao: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 18,
-    color: '#666',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  linhaSwitch: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 30,
-    paddingHorizontal: 10,
-  },
-  textoSwitch: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 22,
-    color: '#333',
-  },
+  container: { flex: 1, backgroundColor: '#FFF' },
+  headerRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 25, paddingTop: 15, gap: 15 },
+  btnVoltarRedondo: { backgroundColor: BLUE_COLOR, width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
+  headerTitle: { fontFamily: 'Homenaje_400Regular', fontSize: 36, color: '#000' },
+  scrollContent: { paddingHorizontal: 25, paddingTop: 20, gap: 15, paddingBottom: 30 },
+  card: { backgroundColor: CARD_BG, borderRadius: 20, padding: 16, borderWidth: 1.5, borderColor: '#D3D3D3' },
+  perfilRow: { flexDirection: 'row', alignItems: 'center', position: 'relative' },
+  avatarCirculo: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#D1D7DC', justifyContent: 'center', alignItems: 'center', borderWidth: 1.5, borderColor: '#000', overflow: 'hidden' },
+  avatarImage: { width: '100%', height: '100%', resizeMode: 'cover' },
+  perfilInfo: { marginLeft: 15, flex: 1 },
+  nomeText: { fontFamily: 'Homenaje_400Regular', fontSize: 32, color: '#000', lineHeight: 34 },
+  bioText: { fontFamily: 'Homenaje_400Regular', fontSize: 18, color: '#8A8A8A', marginBottom: 5 },
+  tagsRow: { flexDirection: 'row', gap: 8 },
+  tagAzul: { flexDirection: 'row', alignItems: 'center', backgroundColor: BLUE_COLOR, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 2 },
+  tagText: { fontFamily: 'Homenaje_400Regular', fontSize: 18, color: '#FFF' },
+  miniLogo: { position: 'absolute', top: 0, right: 0 },
+  cardTitle: { fontFamily: 'Homenaje_400Regular', fontSize: 26, color: '#000' },
+  cardSubtitle: { fontFamily: 'Homenaje_400Regular', fontSize: 14, color: '#A0A0A0', marginTop: -2 },
+  comentariosRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10, gap: 10 },
+  boxComentario: { flex: 1, backgroundColor: '#D1D7DC', borderRadius: 12, padding: 10, height: 60, overflow: 'hidden' },
+  autorText: { fontFamily: 'Homenaje_400Regular', fontSize: 14, color: '#000' },
+  comentarioCorpo: { fontFamily: 'Homenaje_400Regular', fontSize: 14, color: '#8A8A8A', marginTop: -2 },
+  textoVazioFixados: { fontFamily: 'Homenaje_400Regular', fontSize: 16, color: '#8A8A8A', marginTop: 5 },
+  ganhosHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  valorPrincipal: { fontFamily: 'Homenaje_400Regular', fontSize: 30, color: BLUE_COLOR },
+  valorSemanal: { fontFamily: 'Homenaje_400Regular', fontSize: 20, color: BLUE_COLOR, marginTop: 2 },
+  btnSacar: { backgroundColor: BLUE_COLOR, borderRadius: 15, width: 95, height: 32, alignSelf: 'flex-end', justifyContent: 'center', alignItems: 'center', borderWidth: 1.5, borderColor: '#000', marginTop: -5 },
+  btnSacarText: { fontFamily: 'Homenaje_400Regular', fontSize: 20, color: '#FFF' },
+  accordionContainer: { gap: 12, marginTop: 2 },
+  botaoLista: { backgroundColor: CARD_BG, borderRadius: 18, borderWidth: 1.5, borderColor: '#D3D3D3', overflow: 'hidden' },
+  botaoListaExpandido: { paddingBottom: 10 },
+  accordionHeader: { height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20 },
+  botaoListaText: { fontFamily: 'Homenaje_400Regular', fontSize: 24, color: '#444' },
+  textAzul: { color: BLUE_COLOR },
+  accordionContent: { paddingHorizontal: 40, paddingTop: 2, gap: 4 },
+  linhaEspecialidade: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  itemEspecialidade: { fontFamily: 'Homenaje_400Regular', fontSize: 24, color: '#555' },
+  btnAdicionar: { alignSelf: 'flex-start', marginTop: 6, marginLeft: -2 },
+  opcoesConfigItem: { paddingVertical: 10, borderBottomWidth: 1, borderColor: '#D1D7DC', width: '100%' },
+  modalFundoOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.6)', justifyContent: 'center', alignItems: 'center' },
+  modalCard: { backgroundColor: '#EAEAEA', width: '85%', borderRadius: 30, paddingHorizontal: 25, paddingTop: 30, paddingBottom: 30, alignItems: 'center', elevation: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 5 },
+  modalTitle: { fontFamily: 'Homenaje_400Regular', fontSize: 36, color: BLUE_COLOR, textAlign: 'center', lineHeight: 38, marginBottom: 25, width: '100%' },
+  modalInput: { backgroundColor: '#FFF', width: '100%', height: 55, borderRadius: 15, borderWidth: 1.5, borderColor: '#333', paddingHorizontal: 15, fontFamily: 'Homenaje_400Regular', fontSize: 22, color: '#333', marginBottom: 15 },
+  linkAnexar: { fontFamily: 'Homenaje_400Regular', fontSize: 22, color: BLUE_COLOR, textDecorationLine: 'underline', alignSelf: 'center', marginTop: 5, marginBottom: 25 },
+  modalBtnContainer: { width: '100%', alignItems: 'center' },
+  modalBtnSalvar: { backgroundColor: BLUE_COLOR, width: '100%', height: 55, borderRadius: 28, justifyContent: 'center', alignItems: 'center', borderWidth: 1.5, borderColor: '#333' },
+  modalBtnSalvarText: { fontFamily: 'Homenaje_400Regular', fontSize: 26, color: '#FFF' },
+  linhaSwitch: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: 30, paddingHorizontal: 10 },
+  textoSwitch: { fontFamily: 'Homenaje_400Regular', fontSize: 22, color: '#333' }
 });

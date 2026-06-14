@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
-
 import SetaVoltar from '../assets/icons/SetaVoltar';
 import Logo from '../assets/icons/LogoIcon';
 import { supabase } from '../services/supabase';
@@ -12,6 +11,8 @@ const BLUE_COLOR = '#076BDE';
 const KEYPAD_BG = '#F1F4F6';
 
 export default function TelaToken({ navigation, route }) {
+  const insets = useSafeAreaInsets();
+  
   const [codigo, setCodigo] = useState('');
   const [carregando, setCarregando] = useState(false);
 
@@ -78,8 +79,8 @@ export default function TelaToken({ navigation, route }) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) + 10 }]}>
         <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.goBack()}>
           <SetaVoltar width={45} height={45} />
         </TouchableOpacity>
@@ -88,11 +89,11 @@ export default function TelaToken({ navigation, route }) {
         </View>
       </View>
 
-      <View style={styles.codigoContainer}>
-        {renderizarQuadrados()}
-      </View>
+      <View style={styles.middleContent}>
+        <View style={styles.codigoContainer}>
+          {renderizarQuadrados()}
+        </View>
 
-      <View style={styles.avancarContainer}>
         <TouchableOpacity 
           style={styles.circleButtonAvancar}
           onPress={handleValidarToken}
@@ -106,7 +107,7 @@ export default function TelaToken({ navigation, route }) {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.keypadContainer}>
+      <View style={[styles.keypadContainer, { paddingBottom: Math.max(insets.bottom, 20) + 20 }]}>
         <View style={styles.dragHandle} />
         
         <View style={styles.keypadRow}>
@@ -143,7 +144,7 @@ export default function TelaToken({ navigation, route }) {
           </TouchableOpacity>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -155,8 +156,8 @@ const styles = StyleSheet.create({
   header: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
-    padding: 20, 
-    marginTop: 20 
+    paddingHorizontal: 20,
+    paddingBottom: 10,
   },
   iconContainer: { 
     width: 45, 
@@ -164,10 +165,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center', 
     alignItems: 'center' 
   },
+  middleContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 50, // Mantém um espaço bonito entre os quadrados e a seta azul
+  },
   codigoContainer: { 
     flexDirection: 'row', 
     justifyContent: 'center', 
-    marginTop: 60, 
     gap: 8, 
     paddingHorizontal: 10 
   },
@@ -185,11 +191,6 @@ const styles = StyleSheet.create({
     fontSize: 26, 
     fontFamily: 'Homenaje_400Regular' 
   },
-  avancarContainer: { 
-    alignItems: 'center', 
-    marginTop: 80, 
-    flex: 1 
-  },
   circleButtonAvancar: { 
     width: 60, 
     height: 60, 
@@ -203,8 +204,8 @@ const styles = StyleSheet.create({
     backgroundColor: KEYPAD_BG, 
     borderTopLeftRadius: 30, 
     borderTopRightRadius: 30, 
-    padding: 20, 
-    paddingBottom: 40, 
+    paddingTop: 20, 
+    paddingHorizontal: 20,
     alignItems: 'center' 
   },
   dragHandle: { 

@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { View, FlatList, StyleSheet, ActivityIndicator } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { View, FlatList, StyleSheet, ActivityIndicator, Text } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from '@expo/vector-icons'; // <-- CORREÇÃO: Importação adicionada
 
 import LogoIcon from "../assets/icons/LogoIcon";
 import { CardServico } from "../components/CardServico";
 import { supabase } from "../services/supabase";
 
+const BLUE_COLOR = '#076BDE';
+
 export default function TelaServicos() {
+  const insets = useSafeAreaInsets();
   const [servicos, setServicos] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -99,16 +103,18 @@ export default function TelaServicos() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" />
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color={BLUE_COLOR} />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
-      <View style={styles.header}>
-        <LogoIcon width={50} height={50} />
+    <View style={styles.container}>
+      {/* Cabeçalho dinâmico e padronizado com o SafeArea */}
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) + 10 }]}>
+        <Text style={styles.headerTitle}>Histórico</Text>
+        <LogoIcon width={45} height={45} />
       </View>
 
       <FlatList
@@ -133,44 +139,53 @@ export default function TelaServicos() {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <LogoIcon width={60} height={60} />
+            <Ionicons name="document-text-outline" size={60} color="#A0A8B0" />
+            <Text style={styles.emptyText}>Nenhum serviço finalizado ainda.</Text>
           </View>
         }
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: "#D9D9D9",
   },
-
   loadingContainer: {
-    flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
-
   header: {
-    height: 82,
-    borderBottomWidth: 1,
-    borderBottomColor: "#9BA7B1",
-    alignItems: "flex-end",
-    justifyContent: "center",
-    paddingRight: 16,
-    backgroundColor: "#D9D9D9",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#A8B7C1',
+    backgroundColor: '#D9D9D9',
   },
-
+  headerTitle: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 32,
+    color: '#111',
+  },
   lista: {
-    paddingTop: 28,
+    paddingTop: 20,
+    paddingHorizontal: 16,
     paddingBottom: 40,
-    gap: 34,
+    gap: 15,
   },
-
   emptyContainer: {
     marginTop: 80,
     alignItems: "center",
+    gap: 10,
   },
+  emptyText: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 20,
+    color: '#7A8A9E',
+  }
 });

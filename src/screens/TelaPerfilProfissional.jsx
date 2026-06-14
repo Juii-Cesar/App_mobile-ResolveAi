@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../services/supabase';
+import * as WebBrowser from 'expo-web-browser';
 
 const BLUE_COLOR = '#076BDE';
 const CARD_BG = '#EAEAEA';
@@ -199,15 +200,15 @@ export default function TelaPerfilProfissional({ navigation, route }) {
                       </View>
 
                       {esp.certificado_url ? (
-                        <TouchableOpacity 
-                          style={styles.btnCertificado}
-                          onPress={() => Linking.openURL(esp.certificado_url)}
-                          activeOpacity={0.7}
-                        >
-                          <Ionicons name="document-text-outline" size={14} color={BLUE_COLOR} />
-                          <Text style={styles.btnCertificadoTexto}>Ver cert.</Text>
-                        </TouchableOpacity>
-                      ) : null}
+                          <TouchableOpacity 
+                            style={styles.btnCertificado}
+                            onPress={() => WebBrowser.openBrowserAsync(esp.certificado_url)}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="document-text-outline" size={14} color={BLUE_COLOR} />
+                            <Text style={styles.btnCertificadoTexto}>Ver cert.</Text>
+                          </TouchableOpacity>
+                          ) : null}
                     </View>
                   ))
                 ) : (
