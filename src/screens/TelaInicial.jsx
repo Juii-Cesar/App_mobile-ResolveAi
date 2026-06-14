@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Modal, TextInput, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Modal, TextInput, ActivityIndicator, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../services/supabase';
 // import { GoogleSignin } from '@react-native-google-signin/google-signin';
@@ -83,55 +83,65 @@ export default function TelaInicial({ navigation }) {
         onRequestClose={() => setModalVisivel(false)}
       >
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setModalVisivel(false)}>
-          <View style={styles.bottomSheet} onStartShouldSetResponder={() => true}>
-            
-            <View style={styles.dragHandle} />
-
-            <View style={styles.emailRow}>
-              <TextInput 
-                style={styles.emailInput} 
-                keyboardType="email-address"
-                placeholder="Email"
-                placeholderTextColor="#666"
-                value={email}
-                onChangeText={(texto) => setEmail(texto)}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-
-            <TouchableOpacity 
-              style={styles.modalButton}
-              onPress={handleLoginEmail}
-              disabled={carregando}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ width: '100%' }}
+          >
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end' }}
             >
-              {carregando ? (
-                <ActivityIndicator color={WHITE_COLOR} size="small" />
-              ) : (
-                <Text style={styles.modalButtonText}>ENTRAR</Text>
-              )}
-            </TouchableOpacity>
+              <View style={styles.bottomSheet} onStartShouldSetResponder={() => true}>
+                
+                <View style={styles.dragHandle} />
 
-            <View style={styles.dividerRow}>
-              <View style={styles.line} />
-              <Text style={styles.ouText}>ou</Text>
-              <View style={styles.line} />
-            </View>
+                <View style={styles.emailRow}>
+                  <TextInput 
+                    style={styles.emailInput} 
+                    keyboardType="email-address"
+                    placeholder="Email"
+                    placeholderTextColor="#666"
+                    value={email}
+                    onChangeText={(texto) => setEmail(texto)}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
 
-            <TouchableOpacity 
-              style={styles.socialButton}
-              activeOpacity={0.7}
-              onPress={handleLoginGoogle}
-              disabled={carregando}
-            >
-              {carregando ? (
-                <ActivityIndicator color="#000" size="small" />
-              ) : (
-                <Text style={styles.socialButtonText}>Continuar com o Google</Text>
-              )}
-            </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.modalButton}
+                  onPress={handleLoginEmail}
+                  disabled={carregando}
+                >
+                  {carregando ? (
+                    <ActivityIndicator color={WHITE_COLOR} size="small" />
+                  ) : (
+                    <Text style={styles.modalButtonText}>ENTRAR</Text>
+                  )}
+                </TouchableOpacity>
 
-          </View>
+                <View style={styles.dividerRow}>
+                  <View style={styles.line} />
+                  <Text style={styles.ouText}>ou</Text>
+                  <View style={styles.line} />
+                </View>
+
+                <TouchableOpacity 
+                  style={styles.socialButton}
+                  activeOpacity={0.7}
+                  onPress={handleLoginGoogle}
+                  disabled={carregando}
+                >
+                  {carregando ? (
+                    <ActivityIndicator color="#000" size="small" />
+                  ) : (
+                    <Text style={styles.socialButtonText}>Continuar com o Google</Text>
+                  )}
+                </TouchableOpacity>
+
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </TouchableOpacity>
       </Modal>
 
