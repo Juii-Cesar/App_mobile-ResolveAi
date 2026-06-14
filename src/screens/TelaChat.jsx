@@ -13,16 +13,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useServico } from '../context/ServicoContext';
+import { supabase } from '../services/supabase';
 
 const BLUE = '#076BDE';
 
 const SUGESTOES = ['Olá', 'Está vindo ?'];
-
-const MSGS_INICIAIS = [
-  { id: '1', texto: 'Olá! Vi sua solicitação.', minha: false },
-  { id: '2', texto: 'Posso ir até você agora.', minha: false },
-  { id: '3', texto: 'Qual é o endereço exato?', minha: false },
-];
 
 export default function TelaChat({ navigation, route }) {
   const profissionalNome = route?.params?.profissionalNome ?? 'Profissional';
@@ -32,11 +27,12 @@ export default function TelaChat({ navigation, route }) {
 
   const { iniciarServico, cancelarServico } = useServico();
 
-  const [mensagens, setMensagens] = useState(MSGS_INICIAIS);
+  const [mensagens, setMensagens] = useState([]);
   const [texto, setTexto] = useState('');
+  const [chatId, setChatId] = useState(null);
+  const [userId, setUserId] = useState(null);
   const flatRef = useRef(null);
 
-  // Registra o serviço ativo assim que o chat abre
   useEffect(() => {
     iniciarServico({
       profissionalNome,
@@ -45,27 +41,100 @@ export default function TelaChat({ navigation, route }) {
       descricao,
       routeParams: route?.params ?? {},
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    let channel;
+    async function iniciarChat() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setUserId(user.id);
+
+      const { data: servicoAtivo } = await supabase
+        .from('servicos')
+        .select('id, idcliente, idprofissional')
+        .eq('idcliente', user.id)
+        .eq('status', 'servicoAceito')
+        .order('criadoem', { ascending: false })
+        .limit(1)
+        .single();
+
+      const sId = servicoAtivo?.id;
+      if (!sId) return;
+
+      let { data: salaChat } = await supabase.from('chats').select('id').eq('servico_id', sId).maybeSingle();
+
+      if (!salaChat) {
+        const { data: novaSala, error } = await supabase.from('chats').insert({
+          servico_id: sId,
+          cliente_id: servicoAtivo.idcliente,
+          profissional_id: servicoAtivo.idprofissional
+        }).select('id').maybeSingle();
+        
+        if (error) {
+          const { data: tentaDeNovo } = await supabase.from('chats').select('id').eq('servico_id', sId).single();
+          salaChat = tentaDeNovo;
+        } else {
+          salaChat = novaSala;
+        }
+      }
+
+      const idDaSala = salaChat?.id;
+      if (!idDaSala) return;
+      
+      setChatId(idDaSala);
+
+      const { data: antigas } = await supabase
+        .from('chat_mensagens')
+        .select('*')
+        .eq('chat_id', idDaSala)
+        .order('created_at', { ascending: true });
+
+      if (antigas) {
+        setMensagens(antigas.map(m => ({
+          id: m.id.toString(),
+          texto: m.mensagem,
+          minha: m.remetente_id === user.id
+        })));
+      }
+
+      channel = supabase.channel(`chat_${idDaSala}`)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_mensagens', filter: `chat_id=eq.${idDaSala}` }, 
+          payload => {
+            const novaMsg = payload.new;
+            if (novaMsg.remetente_id !== user.id) {
+              setMensagens(prev => [...prev, {
+                id: novaMsg.id.toString(),
+                texto: novaMsg.mensagem,
+                minha: false
+              }]);
+            }
+          }
+        ).subscribe();
+    }
+
+    iniciarChat();
+
+    return () => { if (channel) supabase.removeChannel(channel); };
   }, []);
 
   useEffect(() => {
     setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 100);
   }, [mensagens]);
 
-  function enviar(msg) {
+  async function enviar(msg) {
     const novaMensagem = msg ?? texto.trim();
-    if (!novaMensagem) return;
+    if (!novaMensagem || !userId || !chatId) return;
 
-    const nova = { id: Date.now().toString(), texto: novaMensagem, minha: true };
-    setMensagens(prev => [...prev, nova]);
+    const tempId = Date.now().toString();
+    setMensagens(prev => [...prev, { id: tempId, texto: novaMensagem, minha: true }]);
     setTexto('');
 
-    setTimeout(() => {
-      setMensagens(prev => [
-        ...prev,
-        { id: (Date.now() + 1).toString(), texto: 'Ok, já estou a caminho!', minha: false },
-      ]);
-    }, 1200);
+    await supabase.from('chat_mensagens').insert({
+      chat_id: chatId,
+      remetente_id: userId,
+      mensagem: novaMensagem
+    });
   }
 
   function handleEncerrar() {
@@ -103,7 +172,6 @@ export default function TelaChat({ navigation, route }) {
           <Ionicons name="arrow-back" size={24} color="#FFF" />
         </TouchableOpacity>
 
-        {/* Nome + ícone de info — abre perfil do profissional */}
         <TouchableOpacity
           style={styles.headerNomeArea}
           onPress={() =>
@@ -169,151 +237,24 @@ export default function TelaChat({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#D9D9D9',
-  },
-
-  header: {
-    height: 60,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    backgroundColor: '#D9D9D9',
-    borderBottomWidth: 1,
-    borderBottomColor: '#9BA7B1',
-    gap: 12,
-  },
-
-  btnVoltar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: BLUE,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  headerNomeArea: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  headerNome: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 20,
-    color: '#111',
-  },
-
-  btnEncerrar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#D32F2F',
-  },
-
-  btnEncerrarTexto: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 14,
-    color: '#D32F2F',
-  },
-
-  listaPadding: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-
-  bolha: {
-    maxWidth: '70%',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 16,
-    marginVertical: 4,
-  },
-
-  bolhaMinha: {
-    alignSelf: 'flex-end',
-    backgroundColor: BLUE,
-    borderBottomRightRadius: 4,
-  },
-
-  bolhaDele: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#EEE',
-    borderBottomLeftRadius: 4,
-  },
-
-  bolhaTexto: {
-    fontSize: 15,
-    color: '#222',
-    fontFamily: 'Homenaje_400Regular',
-  },
-
-  bolhaTextoMinha: {
-    color: '#FFF',
-  },
-
-  sugestoesRow: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-
-  sugestao: {
-    backgroundColor: '#EEE',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: '#CCC',
-  },
-
-  sugestaoTexto: {
-    fontSize: 14,
-    color: '#444',
-    fontFamily: 'Homenaje_400Regular',
-  },
-
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-    paddingTop: 8,
-    gap: 10,
-    backgroundColor: '#D9D9D9',
-  },
-
-  input: {
-    flex: 1,
-    height: 46,
-    backgroundColor: '#EEE',
-    borderRadius: 23,
-    paddingHorizontal: 16,
-    fontSize: 15,
-    color: '#333',
-    borderWidth: 1,
-    borderColor: '#CCC',
-    fontFamily: 'Homenaje_400Regular',
-  },
-
-  btnEnviar: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: BLUE,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  btnEnviarDisabled: {
-    backgroundColor: '#9BA7B1',
-  },
+  container: { flex: 1, backgroundColor: '#D9D9D9' },
+  header: { height: 60, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, backgroundColor: '#D9D9D9', borderBottomWidth: 1, borderBottomColor: '#9BA7B1', gap: 12 },
+  btnVoltar: { width: 38, height: 38, borderRadius: 19, backgroundColor: BLUE, justifyContent: 'center', alignItems: 'center' },
+  headerNomeArea: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 5 },
+  headerNome: { fontFamily: 'Homenaje_400Regular', fontSize: 20, color: '#111' },
+  btnEncerrar: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, borderWidth: 1.5, borderColor: '#D32F2F' },
+  btnEncerrarTexto: { fontFamily: 'Homenaje_400Regular', fontSize: 14, color: '#D32F2F' },
+  listaPadding: { paddingHorizontal: 16, paddingVertical: 12, gap: 8 },
+  bolha: { maxWidth: '70%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, marginVertical: 4 },
+  bolhaMinha: { alignSelf: 'flex-end', backgroundColor: BLUE, borderBottomRightRadius: 4 },
+  bolhaDele: { alignSelf: 'flex-start', backgroundColor: '#EEE', borderBottomLeftRadius: 4 },
+  bolhaTexto: { fontSize: 15, color: '#222', fontFamily: 'Homenaje_400Regular' },
+  bolhaTextoMinha: { color: '#FFF' },
+  sugestoesRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 8 },
+  sugestao: { backgroundColor: '#EEE', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: '#CCC' },
+  sugestaoTexto: { fontSize: 14, color: '#444', fontFamily: 'Homenaje_400Regular' },
+  inputRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 24, paddingTop: 8, gap: 10, backgroundColor: '#D9D9D9' },
+  input: { flex: 1, height: 46, backgroundColor: '#EEE', borderRadius: 23, paddingHorizontal: 16, fontSize: 15, color: '#333', borderWidth: 1, borderColor: '#CCC', fontFamily: 'Homenaje_400Regular' },
+  btnEnviar: { width: 46, height: 46, borderRadius: 23, backgroundColor: BLUE, justifyContent: 'center', alignItems: 'center' },
+  btnEnviarDisabled: { backgroundColor: '#9BA7B1' },
 });
