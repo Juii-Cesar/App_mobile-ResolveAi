@@ -97,7 +97,6 @@ export default function TelaBuscarProfissional({ navigation, route }) {
         
         setTaxaAplicada(valorTaxa);
 
-        // TENTA INSERIR NO BANCO
         const { data: servicoData, error } = await supabase.from('servicos')
           .insert({
             idcliente: user.id,

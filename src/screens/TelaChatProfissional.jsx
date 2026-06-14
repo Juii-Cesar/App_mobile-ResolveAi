@@ -150,7 +150,7 @@ export default function TelaChatProfissional({ navigation, route }) {
     try {
       const { error } = await supabase.from('servicos')
         .update({ 
-          status: 'concluido', 
+          status: 'finalizado', 
           valor: valorTotalFinal 
         })
         .eq('id', servicoId);
