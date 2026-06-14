@@ -127,7 +127,7 @@ export default function TelaConta() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#CBCBCB',
+    backgroundColor: '#D9D9D9',
   },
   container: {
     flex: 1,
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    backgroundColor: '#CBCBCB',
+    backgroundColor: '#D9D9D9',
     marginBottom: 16,
   },
   headerDireita: {
