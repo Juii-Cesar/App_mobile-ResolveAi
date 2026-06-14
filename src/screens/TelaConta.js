@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Modal,
   Image,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,26 +16,11 @@ import { useAuth } from '../context/AuthContext';
 
 export default function TelaConta() {
   const navigation = useNavigation();
-  const { servicoAtivo, cancelarServico } = useServico();
+  const { servicoAtivo } = useServico();
 
   const { usuario } = useAuth();
 
   const [modalPerfilVisivel, setModalPerfilVisivel] = useState(false);
-
-  function handleCancelarServico() {
-    Alert.alert(
-      'Cancelar serviço',
-      'Deseja realmente cancelar o serviço em andamento?',
-      [
-        { text: 'Não', style: 'cancel' },
-        {
-          text: 'Sim, cancelar',
-          style: 'destructive',
-          onPress: () => cancelarServico(),
-        },
-      ],
-    );
-  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -85,9 +69,7 @@ export default function TelaConta() {
               {servicoAtivo.descricao}
             </Text>
 
-            <View style={styles.servicoBotoes}>
-  
-              <TouchableOpacity
+            <TouchableOpacity
                 style={styles.btnVoltarChat}
                 onPress={() =>
                   navigation.navigate('Início', {
@@ -99,16 +81,6 @@ export default function TelaConta() {
                 <Ionicons name="chatbubble-ellipses-outline" size={18} color="#FFF" />
                 <Text style={styles.btnVoltarChatTexto}>Abrir chat</Text>
               </TouchableOpacity>
-
-      
-              <TouchableOpacity
-                style={styles.btnCancelarServico}
-                onPress={handleCancelarServico}
-              >
-                <Ionicons name="close-circle-outline" size={18} color="#D32F2F" />
-                <Text style={styles.btnCancelarServicoTexto}>Cancelar</Text>
-              </TouchableOpacity>
-            </View>
           </View>
         )}
 
@@ -276,10 +248,6 @@ const styles = StyleSheet.create({
     color: '#555',
     marginBottom: 14,
   },
-  servicoBotoes: {
-    flexDirection: 'row',
-    gap: 10,
-  },
   btnVoltarChat: {
     flex: 1,
     flexDirection: 'row',
@@ -295,23 +263,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFF',
   },
-  btnCancelarServico: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    borderWidth: 1.5,
-    borderColor: '#D32F2F',
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  btnCancelarServicoTexto: {
-    fontFamily: 'Homenaje_400Regular',
-    fontSize: 16,
-    color: '#D32F2F',
-  },
-
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.35)',

@@ -25,7 +25,7 @@ export default function TelaChat({ navigation, route }) {
   const profissionalId   = route?.params?.profissionalId   ?? 'default';
   const categoria        = route?.params?.categoria        ?? '';
   const descricao        = route?.params?.descricao        ?? '';
-  const { iniciarServico, cancelarServico } = useServico();
+  const { iniciarServico, finalizarServico } = useServico();
   const [mensagens, setMensagens] = useState([]);
   const [texto, setTexto] = useState('');
   const [chatId, setChatId] = useState(null);
@@ -154,24 +154,6 @@ export default function TelaChat({ navigation, route }) {
     });
   }
 
-  function handleEncerrar() {
-    Alert.alert(
-      'Encerrar serviço',
-      'Deseja realmente cancelar o serviço em andamento?',
-      [
-        { text: 'Não', style: 'cancel' },
-        {
-          text: 'Sim, cancelar',
-          style: 'destructive',
-          onPress: () => {
-            cancelarServico();
-            navigation.popToTop();
-          },
-        },
-      ],
-    );
-  }
-
   function renderMensagem({ item }) {
     return (
       <View style={[styles.bolha, item.minha ? styles.bolhaMinha : styles.bolhaDele]}>
@@ -197,7 +179,7 @@ export default function TelaChat({ navigation, route }) {
             <TouchableOpacity 
               style={styles.btnPagar} 
               onPress={() => {
-                cancelarServico();
+                finalizarServico();
                 Alert.alert('Pagamento', 'Função em desenvolvimento.', [
                   { text: 'OK', onPress: () => navigation.popToTop() }
                 ]);
@@ -227,10 +209,7 @@ export default function TelaChat({ navigation, route }) {
           <Ionicons name="information-circle-outline" size={16} color="#555" />
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={handleEncerrar} style={styles.btnEncerrar}>
-          <Ionicons name="close-circle-outline" size={20} color="#D32F2F" />
-          <Text style={styles.btnEncerrarTexto}>Encerrar</Text>
-        </TouchableOpacity>
+
       </View>
 
       <KeyboardAvoidingView
@@ -292,8 +271,7 @@ const styles = StyleSheet.create({
   btnVoltar: { width: 38, height: 38, borderRadius: 19, backgroundColor: BLUE, justifyContent: 'center', alignItems: 'center' },
   headerNomeArea: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 5 },
   headerNome: { fontFamily: 'Homenaje_400Regular', fontSize: 20, color: '#111' },
-  btnEncerrar: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, borderWidth: 1.5, borderColor: '#D32F2F' },
-  btnEncerrarTexto: { fontFamily: 'Homenaje_400Regular', fontSize: 14, color: '#D32F2F' },
+
   listaPadding: { paddingHorizontal: 16, paddingVertical: 12, gap: 8 },
   bolha: { maxWidth: '70%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, marginVertical: 4 },
   bolhaMinha: { alignSelf: 'flex-end', backgroundColor: BLUE, borderBottomRightRadius: 4 },
