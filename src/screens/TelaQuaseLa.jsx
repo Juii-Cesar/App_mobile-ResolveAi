@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { StyleSheet, View, Text, Image, Alert, ActivityIndicator } from "react-native";
+import { StyleSheet, View, Text, Image, Modal, TouchableOpacity, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
@@ -17,26 +17,37 @@ export const TelaQuaseLa = () => {
   const navigation = useNavigation();
   const { accountType } = useUserType();
   const { formData, updateFormData } = useRegistration();
-  
+
   const [isLoading, setIsLoading] = useState(false);
+  const [modalAviso, setModalAviso] = useState({ visible: false, titulo: '', mensagem: '', tipo: 'default', onOk: null });
+
+  const fecharAviso = () => {
+    const cb = modalAviso.onOk;
+    setModalAviso({ visible: false, titulo: '', mensagem: '', tipo: 'default', onOk: null });
+    if (cb) cb();
+  };
 
   const handleTirarFoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert("Permissão necessária", "Precisamos de acesso à câmera para você fotografar o documento.");
+      setModalAviso({
+        visible: true,
+        titulo: 'Permissão necessária',
+        mensagem: 'Precisamos de acesso à câmera para você fotografar o documento.',
+        tipo: 'default',
+        onOk: null,
+      });
       return;
     }
 
     const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ['images'], 
-        quality: 0.7,
+      mediaTypes: ['images'],
+      quality: 0.7,
     });
 
     if (!result.canceled) {
       const photoUri = result.assets[0].uri;
-
       updateFormData({ documentoCliente: photoUri });
-
       finalizarCadastroCliente(photoUri);
     }
   };
@@ -68,19 +79,30 @@ export const TelaQuaseLa = () => {
 
       const { error: uploadError } = await supabase.storage
         .from('documentos-sigilosos')
-        .upload(fileName, decode(base64), { 
+        .upload(fileName, decode(base64), {
           contentType: fileExt === 'png' ? 'image/png' : 'image/jpeg',
-          upsert: true 
+          upsert: true
         });
 
       if (uploadError) throw new Error("Erro no upload da foto: " + uploadError.message);
 
-      Alert.alert("Sucesso!", "Cadastro concluído. Seja bem-vindo!");
-      navigation.replace("Tabs");
+      setModalAviso({
+        visible: true,
+        titulo: 'Sucesso!',
+        mensagem: 'Cadastro concluído. Seja bem-vindo!',
+        tipo: 'default',
+        onOk: () => navigation.replace("Tabs"),
+      });
 
     } catch (error) {
       console.error("Erro no cadastro de cliente:", error);
-      Alert.alert("Ops!", "Ocorreu um problema ao finalizar seu cadastro. " + error.message);
+      setModalAviso({
+        visible: true,
+        titulo: 'Ops!',
+        mensagem: 'Ocorreu um problema ao finalizar seu cadastro. ' + error.message,
+        tipo: 'danger',
+        onOk: null,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -124,69 +146,126 @@ export const TelaQuaseLa = () => {
               <Text style={{ marginTop: 10, color: BLUE_COLOR, fontWeight: 'bold' }}>Finalizando seu cadastro...</Text>
             </View>
           ) : (
-            <Button
-              title="Tirar foto"
-              onPress={handleTirarFoto}
-            />
+            <Button title="Tirar foto" onPress={handleTirarFoto} />
           )}
         </View>
-
       </View>
+
+      <Modal visible={modalAviso.visible} transparent animationType="fade" onRequestClose={fecharAviso}>
+        <View style={styles.overlay}>
+          <View style={styles.modalAvisoCard}>
+            <Text style={[styles.modalAvisoTitulo, modalAviso.tipo === 'danger' && styles.modalAvisoTituloDanger]}>
+              {modalAviso.titulo}:
+            </Text>
+            <Text style={styles.modalAvisoMensagem}>{modalAviso.mensagem}</Text>
+            <TouchableOpacity style={styles.btnAvisoOk} onPress={fecharAviso}>
+              <Text style={styles.btnAvisoOkTexto}>Ok</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#DBDBDB" 
+  container: {
+    flex: 1,
+    backgroundColor: "#DBDBDB"
   },
-  header: { 
-    backgroundColor: BLUE_COLOR, 
-    height: 220, 
-    alignItems: "center" 
+  header: {
+    backgroundColor: BLUE_COLOR,
+    height: 220,
+    alignItems: "center"
   },
-  quaseLaContainer: { 
-    marginTop: 40, 
-    fontSize: 50, 
-    fontFamily: "Homenaje_400Regular", 
-    color: "#fff" 
+  quaseLaContainer: {
+    marginTop: 40,
+    fontSize: 50,
+    fontFamily: "Homenaje_400Regular",
+    color: "#fff"
   },
-  content: { 
-    flex: 1, 
-    backgroundColor: "#DBDBDB", 
-    marginTop: -80, 
-    borderTopLeftRadius: 100, 
-    alignItems: "center", 
-    paddingTop: 24, 
-    gap: 12 
+  content: {
+    flex: 1,
+    backgroundColor: "#DBDBDB",
+    marginTop: -80,
+    borderTopLeftRadius: 100,
+    alignItems: "center",
+    paddingTop: 24,
+    gap: 12
   },
-  title: { 
-    fontFamily: "Homenaje_400Regular", 
-    fontSize: 24, 
-    color: BLUE_COLOR, 
-    textAlign: "left" 
+  title: {
+    fontFamily: "Homenaje_400Regular",
+    fontSize: 24,
+    color: BLUE_COLOR,
+    textAlign: "left"
   },
-  subTitle: { 
-    color: "#404040", 
-    fontFamily: "Homenaje_400Regular", 
-    fontSize: 16, 
-    alignSelf: "flex-start", 
-    marginLeft: "5%" 
+  subTitle: {
+    color: "#404040",
+    fontFamily: "Homenaje_400Regular",
+    fontSize: 16,
+    alignSelf: "flex-start",
+    marginLeft: "5%"
   },
-  infos: { 
-    gap: 8, 
-    alignItems: 'center' 
+  infos: {
+    gap: 8,
+    alignItems: 'center'
   },
-  instructions: { 
-    color: "#404040", 
-    fontFamily: "Homenaje_400Regular", 
-    fontSize: 16 
+  instructions: {
+    color: "#404040",
+    fontFamily: "Homenaje_400Regular",
+    fontSize: 16
   },
-  securityWarning: { 
-    color: "#404040", 
-    fontFamily: "Homenaje_400Regular", 
-    fontSize: 12, 
-    textAlign: 'center' 
+  securityWarning: {
+    color: "#404040",
+    fontFamily: "Homenaje_400Regular",
+    fontSize: 12,
+    textAlign: 'center'
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalAvisoCard: {
+    width: 280,
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 20,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  modalAvisoTitulo: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 32,
+    color: BLUE_COLOR,
+    lineHeight: 34,
+    marginBottom: 10,
+  },
+  modalAvisoTituloDanger: {
+    color: '#D32F2F',
+  },
+  modalAvisoMensagem: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 22,
+    color: '#111',
+    lineHeight: 26,
+    marginBottom: 22,
+  },
+  btnAvisoOk: {
+    width: '100%',
+    height: 48,
+    backgroundColor: BLUE_COLOR,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  btnAvisoOkTexto: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 22,
+    color: '#FFF',
   },
 });

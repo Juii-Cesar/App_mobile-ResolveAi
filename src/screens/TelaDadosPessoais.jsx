@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context'; 
-import LogoIcon from '../assets/icons/LogoIcon'; 
+import { StyleSheet, View, Text, TextInput, Modal, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import LogoIcon from '../assets/icons/LogoIcon';
 import { Button } from '../components/Button';
 import { useUserType } from "../context/UserTypeContext";
 import { useRegistration } from "../context/RegistrationContext";
@@ -16,6 +16,10 @@ export default function TelaDadosPessoais({ navigation }) {
   const [sobrenome, setSobrenome] = useState('');
   const [dataNasc, setDataNasc] = useState('');
   const [cpf, setCpf] = useState('');
+
+  const [modalAviso, setModalAviso] = useState({ visible: false, titulo: '', mensagem: '' });
+
+  const fecharAviso = () => setModalAviso({ visible: false, titulo: '', mensagem: '' });
 
   const formatarCPF = (text) => {
     let clean = text.replace(/\D/g, '');
@@ -55,34 +59,50 @@ export default function TelaDadosPessoais({ navigation }) {
 
   const handleContinuar = () => {
     if (!nome.trim() || !sobrenome.trim() || !dataNasc.trim() || !cpf.trim()) {
-      Alert.alert("Atenção", "Por favor, preencha todos os campos antes de continuar.");
+      setModalAviso({
+        visible: true,
+        titulo: 'Atenção',
+        mensagem: 'Por favor, preencha todos os campos antes de continuar.',
+      });
       return;
     }
 
     if (nome.trim().length < 2 || sobrenome.trim().length < 2) {
-      Alert.alert("Atenção", "Por favor, insira um nome e sobrenome válidos.");
+      setModalAviso({
+        visible: true,
+        titulo: 'Atenção',
+        mensagem: 'Por favor, insira um nome e sobrenome válidos.',
+      });
       return;
     }
 
     if (dataNasc.length < 10) {
-      Alert.alert("Atenção", "Por favor, insira uma data de nascimento completa (DD/MM/AAAA).");
+      setModalAviso({
+        visible: true,
+        titulo: 'Atenção',
+        mensagem: 'Por favor, insira uma data de nascimento completa (DD/MM/AAAA).',
+      });
       return;
     }
 
     if (!validarCPF(cpf)) {
-      Alert.alert("Atenção", "O CPF inserido não é válido. Por favor, verifique e tente novamente.");
+      setModalAviso({
+        visible: true,
+        titulo: 'Atenção',
+        mensagem: 'O CPF inserido não é válido. Por favor, verifique e tente novamente.',
+      });
       return;
     }
 
-    updateFormData({ 
-      nome: nome.trim(), 
-      sobrenome: sobrenome.trim(), 
-      dataNasc, 
-      cpf 
+    updateFormData({
+      nome: nome.trim(),
+      sobrenome: sobrenome.trim(),
+      dataNasc,
+      cpf
     });
 
     if (accountType === 'cliente') {
-      navigation.navigate('TelaQuaseLa'); 
+      navigation.navigate('TelaQuaseLa');
     } else {
       navigation.navigate('TelaEspecialidades');
     }
@@ -90,8 +110,8 @@ export default function TelaDadosPessoais({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-      <KeyboardAvoidingView 
-        style={{ flex: 1 }} 
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} bounces={false}>
@@ -106,37 +126,37 @@ export default function TelaDadosPessoais({ navigation }) {
             <Text style={styles.title}>Conte-nos mais{"\n"}sobre você</Text>
 
             <View style={styles.inputGroup}>
-              <TextInput 
-                style={styles.input} 
-                placeholder="Nome" 
-                placeholderTextColor="#666" 
-                value={nome} 
-                onChangeText={setNome} 
+              <TextInput
+                style={styles.input}
+                placeholder="Nome"
+                placeholderTextColor="#666"
+                value={nome}
+                onChangeText={setNome}
                 autoCapitalize="words"
               />
-              <TextInput 
-                style={styles.input} 
-                placeholder="Sobrenome" 
-                placeholderTextColor="#666" 
-                value={sobrenome} 
-                onChangeText={setSobrenome} 
+              <TextInput
+                style={styles.input}
+                placeholder="Sobrenome"
+                placeholderTextColor="#666"
+                value={sobrenome}
+                onChangeText={setSobrenome}
                 autoCapitalize="words"
               />
-              <TextInput 
-                style={styles.input} 
-                placeholder="Data de nascimento" 
-                placeholderTextColor="#666" 
-                keyboardType="numeric" 
-                value={dataNasc} 
+              <TextInput
+                style={styles.input}
+                placeholder="Data de nascimento"
+                placeholderTextColor="#666"
+                keyboardType="numeric"
+                value={dataNasc}
                 onChangeText={(t) => setDataNasc(formatarData(t))}
                 maxLength={10}
               />
-              <TextInput 
-                style={styles.input} 
-                placeholder="CPF" 
-                placeholderTextColor="#666" 
-                keyboardType="numeric" 
-                value={cpf} 
+              <TextInput
+                style={styles.input}
+                placeholder="CPF"
+                placeholderTextColor="#666"
+                keyboardType="numeric"
+                value={cpf}
                 onChangeText={(t) => setCpf(formatarCPF(t))}
                 maxLength={14}
               />
@@ -146,6 +166,18 @@ export default function TelaDadosPessoais({ navigation }) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Modal visible={modalAviso.visible} transparent animationType="fade" onRequestClose={fecharAviso}>
+        <View style={styles.overlay}>
+          <View style={styles.modalAvisoCard}>
+            <Text style={styles.modalAvisoTitulo}>{modalAviso.titulo}:</Text>
+            <Text style={styles.modalAvisoMensagem}>{modalAviso.mensagem}</Text>
+            <TouchableOpacity style={styles.btnAvisoOk} onPress={fecharAviso}>
+              <Text style={styles.btnAvisoOkTexto}>Ok</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -160,18 +192,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 30
   },
-  content: { 
-    flex: 1, 
+  content: {
+    flex: 1,
     backgroundColor: '#DBDBDB',
-    marginTop: -80, 
-    borderTopLeftRadius: 100, 
-    paddingHorizontal: 30, 
+    marginTop: -80,
+    borderTopLeftRadius: 100,
+    paddingHorizontal: 30,
     alignItems: 'center',
-    paddingTop: 60, 
+    paddingTop: 60,
   },
   title: {
     fontFamily: 'Homenaje_400Regular',
-    fontSize: 45, 
+    fontSize: 45,
     color: BLUE_COLOR,
     textAlign: 'center',
     marginBottom: 30,
@@ -186,5 +218,49 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'Homenaje_400Regular',
     color: '#000',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalAvisoCard: {
+    width: 280,
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 20,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  modalAvisoTitulo: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 32,
+    color: BLUE_COLOR,
+    lineHeight: 34,
+    marginBottom: 10,
+  },
+  modalAvisoMensagem: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 22,
+    color: '#111',
+    lineHeight: 26,
+    marginBottom: 22,
+  },
+  btnAvisoOk: {
+    width: '100%',
+    height: 48,
+    backgroundColor: BLUE_COLOR,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  btnAvisoOkTexto: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 22,
+    color: '#FFF',
   },
 });

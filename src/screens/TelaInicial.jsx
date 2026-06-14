@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Modal, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../services/supabase';
 // import { GoogleSignin } from '@react-native-google-signin/google-signin';
@@ -13,6 +13,9 @@ export default function TelaInicial({ navigation }) {
   const [modalVisivel, setModalVisivel] = useState(false);
   const [email, setEmail] = useState('');
   const [carregando, setCarregando] = useState(false);
+  const [modalAviso, setModalAviso] = useState({ visible: false, titulo: '', mensagem: '', tipo: 'default' });
+
+  const fecharAviso = () => setModalAviso({ visible: false, titulo: '', mensagem: '', tipo: 'default' });
 
   useEffect(() => {
     // GoogleSignin.configure({
@@ -24,7 +27,7 @@ export default function TelaInicial({ navigation }) {
     const emailLimpo = email.toLowerCase().trim();
 
     if (!emailLimpo || !emailLimpo.includes('@')) {
-      Alert.alert('E-mail inválido', 'Por favor, insira um endereço de e-mail válido.');
+      setModalAviso({ visible: true, titulo: 'E-mail inválido', mensagem: 'Por favor, insira um endereço de e-mail válido.', tipo: 'default' });
       return;
     }
 
@@ -45,14 +48,14 @@ export default function TelaInicial({ navigation }) {
       navigation.navigate('Token', { emailUsuario: emailLimpo });
 
     } catch (error) {
-      Alert.alert('Erro', error.message || 'Não foi possível enviar o código.');
+      setModalAviso({ visible: true, titulo: 'Erro', mensagem: error.message || 'Não foi possível enviar o código.', tipo: 'danger' });
     } finally {
       setCarregando(false);
     }
   };
 
   const handleLoginGoogle = async () => {
-    Alert.alert('Aviso', 'Login do Google desativado temporariamente para uso no Expo Go.');
+    setModalAviso({ visible: true, titulo: 'Aviso', mensagem: 'Login do Google desativado temporariamente para uso no Expo Go.', tipo: 'default' });
   };
 
   return (
@@ -130,6 +133,20 @@ export default function TelaInicial({ navigation }) {
 
           </View>
         </TouchableOpacity>
+      </Modal>
+
+      <Modal visible={modalAviso.visible} transparent animationType="fade" onRequestClose={fecharAviso}>
+        <View style={styles.overlay}>
+          <View style={styles.modalAvisoCard}>
+            <Text style={[styles.modalAvisoTitulo, modalAviso.tipo === 'danger' && styles.modalAvisoTituloDanger]}>
+              {modalAviso.titulo}:
+            </Text>
+            <Text style={styles.modalAvisoMensagem}>{modalAviso.mensagem}</Text>
+            <TouchableOpacity style={styles.btnAvisoOk} onPress={fecharAviso}>
+              <Text style={styles.btnAvisoOkTexto}>Ok</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -262,5 +279,52 @@ const styles = StyleSheet.create({
     fontFamily: 'Homenaje_400Regular', 
     fontSize: 28, 
     color: '#000' 
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalAvisoCard: {
+    width: 280,
+    backgroundColor: "#FFF",
+    borderRadius: 20,
+    padding: 20,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  modalAvisoTitulo: {
+    fontFamily: "Homenaje_400Regular",
+    fontSize: 32,
+    color: BLUE_COLOR,
+    lineHeight: 34,
+    marginBottom: 10,
+  },
+  modalAvisoTituloDanger: {
+    color: '#D32F2F',
+  },
+  modalAvisoMensagem: {
+    fontFamily: "Homenaje_400Regular",
+    fontSize: 22,
+    color: '#111',
+    lineHeight: 26,
+    marginBottom: 22,
+  },
+  btnAvisoOk: {
+    width: '100%',
+    height: 48,
+    backgroundColor: BLUE_COLOR,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  btnAvisoOkTexto: {
+    fontFamily: "Homenaje_400Regular",
+    fontSize: 22,
+    color: '#FFF',
   },
 });

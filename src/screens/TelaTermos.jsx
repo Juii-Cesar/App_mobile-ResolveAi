@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import LogoIcon from '../assets/icons/LogoIcon';
@@ -13,6 +13,10 @@ export default function TelaTermos({ navigation, route }) {
   const { formData, updateFormData } = useRegistration();
 
   const documentosLidos = formData.documentosLidos || [];
+
+  const [modalAviso, setModalAviso] = useState({ visible: false, titulo: '', mensagem: '' });
+
+  const fecharAviso = () => setModalAviso({ visible: false, titulo: '', mensagem: '' });
 
   useEffect(() => {
     if (route.params?.documentoLidoId) {
@@ -36,12 +40,15 @@ export default function TelaTermos({ navigation, route }) {
 
   const handleAceitarTermos = () => {
     if (!leuTodos) {
-      Alert.alert('Atenção', 'Você precisa abrir e ler todos os documentos listados antes de aceitar.');
+      setModalAviso({
+        visible: true,
+        titulo: 'Atenção',
+        mensagem: 'Você precisa abrir e ler todos os documentos listados antes de aceitar.',
+      });
       return;
     }
 
     updateFormData({ termosAceitos: true });
-
     navigation.navigate('TelaVerificacao');
   };
 
@@ -68,18 +75,18 @@ export default function TelaTermos({ navigation, route }) {
           {itensTermos.map((item) => {
             const jaLeu = documentosLidos.includes(item.id);
             return (
-              <TouchableOpacity 
-                key={item.id} 
+              <TouchableOpacity
+                key={item.id}
                 style={styles.listItem}
                 onPress={() => handleAbrirDocumento(item.id)}
               >
                 <View style={styles.rowItemLeft}>
                   {jaLeu && (
-                    <Ionicons 
-                      name="checkmark-circle" 
-                      size={28} 
-                      color={BLUE_COLOR} 
-                      style={{ marginRight: 10 }} 
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={28}
+                      color={BLUE_COLOR}
+                      style={{ marginRight: 10 }}
                     />
                   )}
                   <Text style={[styles.itemText, jaLeu && { color: '#666' }]}>
@@ -91,77 +98,132 @@ export default function TelaTermos({ navigation, route }) {
             );
           })}
         </View>
-
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button 
-          title="Li e aceito os termos" 
-          onPress={handleAceitarTermos} 
-          disabled={!leuTodos} 
+        <Button
+          title="Li e aceito os termos"
+          onPress={handleAceitarTermos}
+          disabled={!leuTodos}
         />
       </View>
+
+      <Modal visible={modalAviso.visible} transparent animationType="fade" onRequestClose={fecharAviso}>
+        <View style={styles.overlay}>
+          <View style={styles.modalAvisoCard}>
+            <Text style={styles.modalAvisoTitulo}>{modalAviso.titulo}:</Text>
+            <Text style={styles.modalAvisoMensagem}>{modalAviso.mensagem}</Text>
+            <TouchableOpacity style={styles.btnAvisoOk} onPress={fecharAviso}>
+              <Text style={styles.btnAvisoOkTexto}>Ok</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#DBDBDB' 
+  container: {
+    flex: 1,
+    backgroundColor: '#DBDBDB'
   },
-  headerRow: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    paddingHorizontal: 25, 
-    paddingTop: 15 
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 25,
+    paddingTop: 15
   },
-  scrollContent: { 
-    paddingHorizontal: 25, 
-    paddingTop: 20 
+  scrollContent: {
+    paddingHorizontal: 25,
+    paddingTop: 20
   },
-  title: { 
-    fontFamily: 'Homenaje_400Regular', 
-    fontSize: 36, 
-    color: '#000', 
-    marginBottom: 10 
+  title: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 36,
+    color: '#000',
+    marginBottom: 10
   },
-  subtitle: { 
-    fontFamily: 'Homenaje_400Regular', 
-    fontSize: 18, 
-    color: '#555', 
-    lineHeight: 22, 
-    marginBottom: 30 
+  subtitle: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 18,
+    color: '#555',
+    lineHeight: 22,
+    marginBottom: 30
   },
-  listContainer: { 
-    borderTopWidth: 1, 
-    borderColor: GRAY_LINE, 
-    marginBottom: 30 
+  listContainer: {
+    borderTopWidth: 1,
+    borderColor: GRAY_LINE,
+    marginBottom: 30
   },
-  listItem: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    paddingVertical: 18, 
-    borderBottomWidth: 1, 
-    borderColor: GRAY_LINE 
+  listItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 18,
+    borderBottomWidth: 1,
+    borderColor: GRAY_LINE
   },
-  rowItemLeft: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    flex: 1, 
-    paddingRight: 10 
+  rowItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    paddingRight: 10
   },
-  itemText: { 
-    fontFamily: 'Homenaje_400Regular', 
-    fontSize: 24, 
-    color: '#000', 
-    flexShrink: 1 
+  itemText: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 24,
+    color: '#000',
+    flexShrink: 1
   },
-  footer: { 
-    paddingHorizontal: 25, 
-    paddingBottom: 25, 
-    alignItems: 'center' 
-  }
+  footer: {
+    paddingHorizontal: 25,
+    paddingBottom: 25,
+    alignItems: 'center'
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalAvisoCard: {
+    width: 280,
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 20,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  modalAvisoTitulo: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 32,
+    color: BLUE_COLOR,
+    lineHeight: 34,
+    marginBottom: 10,
+  },
+  modalAvisoMensagem: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 22,
+    color: '#111',
+    lineHeight: 26,
+    marginBottom: 22,
+  },
+  btnAvisoOk: {
+    width: '100%',
+    height: 48,
+    backgroundColor: BLUE_COLOR,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  btnAvisoOkTexto: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 22,
+    color: '#FFF',
+  },
 });

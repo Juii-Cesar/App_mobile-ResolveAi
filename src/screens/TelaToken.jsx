@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import SetaVoltar from '../assets/icons/SetaVoltar';
@@ -15,8 +15,11 @@ export default function TelaToken({ navigation, route }) {
   
   const [codigo, setCodigo] = useState('');
   const [carregando, setCarregando] = useState(false);
+  const [modalAviso, setModalAviso] = useState({ visible: false, titulo: '', mensagem: '', tipo: 'default' });
 
   const emailUsuario = route.params?.emailUsuario || '';
+
+  const fecharAviso = () => setModalAviso({ visible: false, titulo: '', mensagem: '', tipo: 'default' });
 
   const handlePressNumero = (num) => {
     if (codigo.length < 6) {
@@ -32,12 +35,12 @@ export default function TelaToken({ navigation, route }) {
 
   const handleValidarToken = async () => {
     if (codigo.length < 6) {
-      Alert.alert('Código incompleto', 'Por favor, insira os 6 dígitos do token enviado.');
+      setModalAviso({ visible: true, titulo: 'Código incompleto', mensagem: 'Por favor, insira os 6 dígitos do token enviado.', tipo: 'default' });
       return;
     }
 
     if (!emailUsuario) {
-      Alert.alert('Erro', 'E-mail do usuário não encontrado. Volte e tente novamente.');
+      setModalAviso({ visible: true, titulo: 'Erro', mensagem: 'E-mail do usuário não encontrado. Volte e tente novamente.', tipo: 'danger' });
       return;
     }
 
@@ -57,7 +60,7 @@ export default function TelaToken({ navigation, route }) {
       navigation.navigate('TelaTipoConta');
 
     } catch (error) {
-      Alert.alert('Token Inválido', error.message || 'O código digitado está incorreto ou expirou.');
+      setModalAviso({ visible: true, titulo: 'Token Inválido', mensagem: error.message || 'O código digitado está incorreto ou expirou.', tipo: 'danger' });
       setCodigo('');
     } finally {
       setCarregando(false);
@@ -144,6 +147,20 @@ export default function TelaToken({ navigation, route }) {
           </TouchableOpacity>
         </View>
       </View>
+
+      <Modal visible={modalAviso.visible} transparent animationType="fade" onRequestClose={fecharAviso}>
+        <View style={styles.overlay}>
+          <View style={styles.modalAvisoCard}>
+            <Text style={[styles.modalAvisoTitulo, modalAviso.tipo === 'danger' && styles.modalAvisoTituloDanger]}>
+              {modalAviso.titulo}:
+            </Text>
+            <Text style={styles.modalAvisoMensagem}>{modalAviso.mensagem}</Text>
+            <TouchableOpacity style={styles.btnAvisoOk} onPress={fecharAviso}>
+              <Text style={styles.btnAvisoOkTexto}>Ok</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -169,7 +186,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 50, // Mantém um espaço bonito entre os quadrados e a seta azul
+    gap: 50,
   },
   codigoContainer: { 
     flexDirection: 'row', 
@@ -246,5 +263,52 @@ const styles = StyleSheet.create({
     fontFamily: 'Homenaje_400Regular', 
     fontSize: 24, 
     color: '#000' 
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalAvisoCard: {
+    width: 280,
+    backgroundColor: "#FFF",
+    borderRadius: 20,
+    padding: 20,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  modalAvisoTitulo: {
+    fontFamily: "Homenaje_400Regular",
+    fontSize: 32,
+    color: BLUE_COLOR,
+    lineHeight: 34,
+    marginBottom: 10,
+  },
+  modalAvisoTituloDanger: {
+    color: '#D32F2F',
+  },
+  modalAvisoMensagem: {
+    fontFamily: "Homenaje_400Regular",
+    fontSize: 22,
+    color: '#111',
+    lineHeight: 26,
+    marginBottom: 22,
+  },
+  btnAvisoOk: {
+    width: '100%',
+    height: 48,
+    backgroundColor: BLUE_COLOR,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  btnAvisoOkTexto: {
+    fontFamily: "Homenaje_400Regular",
+    fontSize: 22,
+    color: '#FFF',
   },
 });

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
@@ -13,10 +13,14 @@ export default function TelaResidencia({ navigation }) {
   const { updateFormData } = useRegistration();
   const [arquivo, setArquivo] = useState(null);
 
+  const [modalAviso, setModalAviso] = useState({ visible: false, titulo: '', mensagem: '', tipo: 'default' });
+
+  const fecharAviso = () => setModalAviso({ visible: false, titulo: '', mensagem: '', tipo: 'default' });
+
   const selecionarArquivo = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/pdf', 'image/*'], 
+        type: ['application/pdf', 'image/*'],
         copyToCacheDirectory: true,
       });
 
@@ -24,18 +28,27 @@ export default function TelaResidencia({ navigation }) {
         setArquivo(result.assets[0]);
       }
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível acessar os arquivos do dispositivo.');
+      setModalAviso({
+        visible: true,
+        titulo: 'Erro',
+        mensagem: 'Não foi possível acessar os arquivos do dispositivo.',
+        tipo: 'danger',
+      });
     }
   };
 
   const handleConfirmar = () => {
     if (!arquivo) {
-      Alert.alert('Atenção', 'Por favor, selecione um comprovante antes de continuar.');
+      setModalAviso({
+        visible: true,
+        titulo: 'Atenção',
+        mensagem: 'Por favor, selecione um comprovante antes de continuar.',
+        tipo: 'default',
+      });
       return;
     }
 
     updateFormData({ comprovanteResidencia: arquivo.uri });
-
     navigation.navigate('TelaVerificacao');
   };
 
@@ -49,7 +62,6 @@ export default function TelaResidencia({ navigation }) {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
         <Text style={styles.title}>
           Comprovante de Residência
         </Text>
@@ -60,7 +72,7 @@ export default function TelaResidencia({ navigation }) {
 
         <View style={styles.uploadContainer}>
           <MaterialCommunityIcons name="file-document-outline" size={80} color={BLUE_COLOR} />
-          
+
           {arquivo ? (
             <View style={styles.arquivoSelecionado}>
               <Text style={styles.nomeArquivo} numberOfLines={2}>
@@ -82,14 +94,27 @@ export default function TelaResidencia({ navigation }) {
         </Text>
 
         <View style={styles.buttonContainer}>
-          <Button 
-            title="Confirmar Envio" 
-            onPress={handleConfirmar} 
+          <Button
+            title="Confirmar Envio"
+            onPress={handleConfirmar}
             disabled={!arquivo}
           />
         </View>
-
       </ScrollView>
+
+      <Modal visible={modalAviso.visible} transparent animationType="fade" onRequestClose={fecharAviso}>
+        <View style={styles.overlay}>
+          <View style={styles.modalAvisoCard}>
+            <Text style={[styles.modalAvisoTitulo, modalAviso.tipo === 'danger' && styles.modalAvisoTituloDanger]}>
+              {modalAviso.titulo}:
+            </Text>
+            <Text style={styles.modalAvisoMensagem}>{modalAviso.mensagem}</Text>
+            <TouchableOpacity style={styles.btnAvisoOk} onPress={fecharAviso}>
+              <Text style={styles.btnAvisoOkTexto}>Ok</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -173,9 +198,56 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 25,
   },
-  buttonContainer: { 
-    width: '100%', 
-    alignItems: 'center', 
-    paddingBottom: 20 
-  }
+  buttonContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingBottom: 20
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalAvisoCard: {
+    width: 280,
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 20,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  modalAvisoTitulo: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 32,
+    color: BLUE_COLOR,
+    lineHeight: 34,
+    marginBottom: 10,
+  },
+  modalAvisoTituloDanger: {
+    color: '#D32F2F',
+  },
+  modalAvisoMensagem: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 22,
+    color: '#111',
+    lineHeight: 26,
+    marginBottom: 22,
+  },
+  btnAvisoOk: {
+    width: '100%',
+    height: 48,
+    backgroundColor: BLUE_COLOR,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  btnAvisoOkTexto: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 22,
+    color: '#FFF',
+  },
 });
