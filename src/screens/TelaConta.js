@@ -37,12 +37,8 @@ export default function TelaConta() {
         </View>
 
         <View style={styles.botoesGrid}>
-          <TouchableOpacity style={styles.botao} onPress={() => navigation.navigate('TelaMinhaConta')}>
+          <TouchableOpacity style={styles.botaoGrande} onPress={() => navigation.navigate('TelaMinhaConta')}>
             <Text style={styles.botaoTexto}>Conta</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.botao} onPress={() => navigation.navigate('TelaFavoritos')}>
-            <Text style={styles.botaoTexto}>Favoritos</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.botaoGrande} onPress={() => navigation.navigate('TelaEnderecos')}>
