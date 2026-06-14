@@ -15,14 +15,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { logout } from "../services/auth";
+import { useAuth } from "../context/AuthContext";
 
 export default function TelaMinhaConta() {
   const navigation = useNavigation();
 
+  const { usuario } = useAuth();
+
   const [telefone, setTelefone] = useState('');
   const [email, setEmail]       = useState('');
-  const [nome, setNome]         = useState('Nome');
-  const [foto, setFoto]         = useState(null);
 
   const [modalPerfilVisivel, setModalPerfilVisivel] = useState(false);
   const [editandoNome, setEditandoNome]             = useState(false);
@@ -61,12 +62,6 @@ export default function TelaMinhaConta() {
     ]);
   }
 
-  function excluirConta() {
-    Alert.alert('Excluir conta', 'Tem certeza? Esta ação não pode ser desfeita.', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Excluir', style: 'destructive', onPress: () => navigation.navigate('Abertura') },
-    ]);
-  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -81,7 +76,7 @@ export default function TelaMinhaConta() {
 
         <Text style={styles.titulo}>Minha conta</Text>
         <Text style={styles.subtitulo}>
-          Olá, usuário{'\n'}bem vindo ao{'\n'}painel conta atualize{'\n'}suas informações
+          Olá, {(usuario?.nome ? `${usuario.nome} ${usuario.sobrenome ?? ''}`.trim() : 'usuário')}{'\n'}bem vindo ao{'\n'}painel conta atualize{'\n'}suas informações
         </Text>
 
         <Text style={styles.label}>Telefone:</Text>
@@ -113,9 +108,7 @@ export default function TelaMinhaConta() {
           <TouchableOpacity style={styles.botaoSair} onPress={sair}>
             <Text style={styles.botaoPerigoTexto}>Sair</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.botaoExcluir} onPress={excluirConta}>
-            <Text style={styles.botaoPerigoTexto}>Excluir conta</Text>
-          </TouchableOpacity>
+
         </View>
 
       </ScrollView>
@@ -136,8 +129,8 @@ export default function TelaMinhaConta() {
             <Text style={styles.modalTitulo}>Altere seu perfil de usuário</Text>
             <View style={styles.fotoContainer}>
               <TouchableOpacity style={styles.fotoCirculo} onPress={escolherFoto}>
-                {foto ? (
-                  <Image source={{ uri: foto }} style={styles.fotoImagem} />
+                {usuario?.foto ? (
+                  <Image source={{ uri: usuario.foto }} style={styles.fotoImagem} />
                 ) : (
                   <Ionicons name="person-outline" size={48} color="#555" />
                 )}
@@ -158,7 +151,7 @@ export default function TelaMinhaConta() {
                   returnKeyType="done"
                 />
               ) : (
-                <Text style={styles.nomeTexto}>{nome}</Text>
+                <Text style={styles.nomeTexto}>{(usuario?.nome ? `${usuario.nome} ${usuario.sobrenome ?? ''}`.trim() : 'Usuário')}</Text>
               )}
               <TouchableOpacity
                 onPress={() => {
@@ -199,8 +192,6 @@ const styles = StyleSheet.create({
   botaoVoltar: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: '#1976D2',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -285,17 +276,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  botaoExcluir: {
-    flex: 1,
-    backgroundColor: '#D50000',
-    borderWidth: 2,
-    borderColor: '#000',
-    borderRadius: 20,
-    height: 40,
-
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
 
   botaoPerigoTexto: {
     fontFamily: 'Homenaje_400Regular',

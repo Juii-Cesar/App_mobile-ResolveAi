@@ -13,14 +13,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import LogoIcon from '../assets/icons/LogoIcon';
 import { useServico } from '../context/ServicoContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function TelaConta() {
   const navigation = useNavigation();
   const { servicoAtivo, cancelarServico } = useServico();
 
+  const { usuario } = useAuth();
+
   const [modalPerfilVisivel, setModalPerfilVisivel] = useState(false);
-  const [foto, setFoto] = useState(null);
-  const [nome, setNome] = useState('Nome');
 
   function handleCancelarServico() {
     Alert.alert(
@@ -44,7 +45,7 @@ export default function TelaConta() {
         <View style={styles.header}>
           <LogoIcon width={50} height={50} />
           <View style={styles.headerDireita}>
-            <Text style={styles.saudacao}>Olá, Cliente</Text>
+            <Text style={styles.saudacao}>Olá, {usuario?.nome ? `${usuario.nome} ${usuario.sobrenome ?? ''}`.trim() : 'Cliente'}</Text>
             <TouchableOpacity onPress={() => setModalPerfilVisivel(true)}>
               <Ionicons name="person-outline" size={20} color="#333" />
             </TouchableOpacity>
@@ -56,14 +57,8 @@ export default function TelaConta() {
             <Text style={styles.botaoTexto}>Conta</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.botao} onPress={() => navigation.navigate('TelaCarteira')}>
-            <Text style={styles.botaoTexto}>Carteira</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.botaoGrande} onPress={() => navigation.navigate('TelaFavoritos')}>
-            <View style={styles.botaoComIcone}>
-              <Text style={styles.botaoTexto}>Favoritos</Text>
-            </View>
+          <TouchableOpacity style={styles.botao} onPress={() => navigation.navigate('TelaFavoritos')}>
+            <Text style={styles.botaoTexto}>Favoritos</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.botaoGrande} onPress={() => navigation.navigate('TelaEnderecos')}>
@@ -71,10 +66,10 @@ export default function TelaConta() {
           </TouchableOpacity>
         </View>
 
-        {/* Card de serviço ativo */}
+    
         {servicoAtivo && (
           <View style={styles.servicoAtivoCard}>
-            {/* Indicador pulsante de status */}
+         
             <View style={styles.servicoAtivoTopo}>
               <View style={styles.badgeAtivo}>
                 <View style={styles.badgePonto} />
@@ -91,7 +86,7 @@ export default function TelaConta() {
             </Text>
 
             <View style={styles.servicoBotoes}>
-              {/* Voltar ao chat */}
+  
               <TouchableOpacity
                 style={styles.btnVoltarChat}
                 onPress={() =>
@@ -105,7 +100,7 @@ export default function TelaConta() {
                 <Text style={styles.btnVoltarChatTexto}>Abrir chat</Text>
               </TouchableOpacity>
 
-              {/* Cancelar serviço */}
+      
               <TouchableOpacity
                 style={styles.btnCancelarServico}
                 onPress={handleCancelarServico}
@@ -123,7 +118,6 @@ export default function TelaConta() {
 
       </View>
 
-      {/* Modal perfil */}
       <Modal
         visible={modalPerfilVisivel}
         transparent
@@ -140,19 +134,19 @@ export default function TelaConta() {
 
             <View style={styles.fotoContainer}>
               <View style={styles.fotoCirculo}>
-                {foto ? (
-                  <Image source={{ uri: foto }} style={styles.fotoImagem} />
+                {usuario?.foto ? (
+                  <Image source={{ uri: usuario.foto }} style={styles.fotoImagem} />
                 ) : (
                   <Ionicons name="person-outline" size={48} color="#555" />
                 )}
               </View>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => { setModalPerfilVisivel(false); navigation.navigate('TelaMinhaConta'); }}>
                 <Text style={styles.linkEditar}>Editar</Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.nomeRow}>
-              <Text style={styles.nomeTexto}>{nome}</Text>
+              <Text style={styles.nomeTexto}>{usuario?.nome ? `${usuario.nome} ${usuario.sobrenome ?? ''}`.trim() : 'Usuário'}</Text>
               <TouchableOpacity onPress={() => { setModalPerfilVisivel(false); navigation.navigate('TelaMinhaConta'); }}>
                 <Text style={styles.linkEditar}>Editar</Text>
               </TouchableOpacity>
@@ -232,7 +226,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
-  // ── Card serviço ativo ──────────────────────────────────────────
   servicoAtivoCard: {
     backgroundColor: '#EEF4FF',
     borderRadius: 20,
@@ -322,7 +315,6 @@ const styles = StyleSheet.create({
     color: '#D32F2F',
   },
 
-  // ── Histórico ───────────────────────────────────────────────────
   historicoCard: {
     backgroundColor: '#F5F5F5',
     borderRadius: 20,
@@ -335,7 +327,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Homenaje_400Regular',
   },
 
-  // ── Modal ───────────────────────────────────────────────────────
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.35)',
