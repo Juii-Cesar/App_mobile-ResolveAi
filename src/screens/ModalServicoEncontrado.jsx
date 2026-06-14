@@ -27,30 +27,42 @@ export default function ModalServicoEncontrado({ visivel, dados, onAceitar, onRe
     }
   }, [visivel]);
 
+  const nomeExibicao = dados?.nomeCliente && dados.nomeCliente !== 'Cliente' ? dados.nomeCliente : 'Cliente Oculto';
+
+  const iniciais = nomeExibicao
+    .split(' ')
+    .slice(0, 2)
+    .map(n => n[0])
+    .join('')
+    .toUpperCase();
+
   return (
     <Modal transparent visible={visivel} animationType="none" statusBarTranslucent>
       <View style={styles.overlay}>
         <Animated.View style={[styles.card, { transform: [{ scale: scaleAnim }], opacity: opacityAnim }]}>
 
-          {/* Badge topo */}
           <View style={styles.badge}>
             <Text style={styles.badgeTexto}>Serviço Encontrado!</Text>
             <View style={styles.badgePonto} />
           </View>
 
-          {/* Info do cliente */}
           <View style={styles.infoRow}>
             <View style={styles.avatar}>
-              <Ionicons name="person-outline" size={28} color="#444" />
+              {nomeExibicao !== 'Cliente Oculto' ? (
+                <Text style={styles.iniciaisTexto}>{iniciais}</Text>
+              ) : (
+                <Ionicons name="person-outline" size={28} color="#444" />
+              )}
             </View>
 
             <View style={styles.infoTextos}>
-              <Text style={styles.nomeCliente}>{dados?.nomeCliente ?? 'Serviço de\nCliente'}</Text>
-              <Text style={styles.profissao}>{dados?.servico ?? 'Serviço como profissão'}</Text>
+              <Text style={styles.nomeCliente} numberOfLines={2}>
+                {nomeExibicao}
+              </Text>
+              <Text style={styles.profissao}>{dados?.servico ?? 'Serviço Geral'}</Text>
             </View>
           </View>
 
-          {/* Botões */}
           <View style={styles.botoesRow}>
             <TouchableOpacity style={styles.btnAceitar} onPress={onAceitar}>
               <Text style={styles.btnAceitarTexto}>Aceitar</Text>
@@ -133,6 +145,12 @@ const styles = StyleSheet.create({
     marginRight: 14,
     borderWidth: 1,
     borderColor: '#CCC',
+  },
+  
+  iniciaisTexto: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 26,
+    color: '#444',
   },
 
   infoTextos: {
