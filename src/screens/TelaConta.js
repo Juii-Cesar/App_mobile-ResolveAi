@@ -112,9 +112,6 @@ export default function TelaConta() {
           </View>
         )}
 
-        <View style={styles.historicoCard}>
-          <Text style={styles.historicoTitulo}>Histórico</Text>
-        </View>
 
       </View>
 
@@ -313,18 +310,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Homenaje_400Regular',
     fontSize: 16,
     color: '#D32F2F',
-  },
-
-  historicoCard: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 20,
-    padding: 20,
-    marginHorizontal: 14,
-  },
-  historicoTitulo: {
-    fontSize: 24,
-    marginBottom: 18,
-    fontFamily: 'Homenaje_400Regular',
   },
 
   modalOverlay: {
