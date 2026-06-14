@@ -9,6 +9,9 @@ import ModalServicoEncontrado from './ModalServicoEncontrado';
 
 import { supabase } from '../services/supabase';
 
+// IMPORTANDO O CONTEXTO DO SEU COLEGA AQUI!
+import { useServico } from '../context/ServicoContext';
+
 const BLUE_COLOR = '#076BDE';
 
 const SUGESTOES_BAIRROS = [
@@ -34,8 +37,12 @@ export default function TelaPrincipalProfissional({ navigation }) {
   const [profissoes, setProfissoes] = useState([]);
   const [profissaoSelecionada, setProfissaoSelecionada] = useState('');
   const [dropdownAberto, setDropdownAberto] = useState(false);
+  
+  // Fila de chamados em tempo real (Supabase)
   const [filaServicos, setFilaServicos] = useState([]);
-  const [servicoAtivo, setServicoAtivo] = useState(null);
+  
+  // ESTADO GLOBAL: Trazendo o servicoAtivo da memória para não "piscar" a tela
+  const { servicoAtivo, iniciarServico, cancelarServico } = useServico();
 
   const [historicoRecente, setHistoricoRecente] = useState([
     { id: 'h1', titulo: 'Casa', subtitulo: 'Definir local', icone: 'home-outline', tipo: 'fixo' },
@@ -66,6 +73,7 @@ export default function TelaPrincipalProfissional({ navigation }) {
           const { data: { user } } = await supabase.auth.getUser();
           if (!user) return;
 
+          // 1. Carregar as profissões do utilizador
           const { data: dataProfissoes } = await supabase
             .from('profissoes_profissional')
             .select('profissao')
@@ -80,21 +88,25 @@ export default function TelaPrincipalProfissional({ navigation }) {
             setProfissaoSelecionada('');
           }
 
-          const { data: dataAtivo } = await supabase
-            .from('servicos')
-            .select('id, descricao, cliente:usuarios!idcliente(nome)')
-            .eq('idprofissional', user.id)
-            .eq('status', 'servicoAceito')
-            .maybeSingle();
+          // 2. Verificar se existe algum serviço pendente/ativo
+          // MÁGICA: Só consulta o banco se o contexto estiver vazio, acabando com o "piscar"!
+          if (!servicoAtivo) {
+            const { data: dataAtivo } = await supabase
+              .from('servicos')
+              .select('id, descricao, cliente:usuarios!idcliente(nome)')
+              .eq('idprofissional', user.id)
+              .eq('status', 'servicoAceito')
+              .maybeSingle();
 
-          if (dataAtivo) {
-            setServicoAtivo({
-              id: dataAtivo.id,
-              nomeCliente: dataAtivo.cliente?.nome || 'Cliente',
-              descricao: dataAtivo.descricao
-            });
-          } else {
-            setServicoAtivo(null);
+            if (dataAtivo) {
+              iniciarServico({
+                id: dataAtivo.id,
+                nomeCliente: dataAtivo.cliente?.nome || 'Cliente',
+                descricao: dataAtivo.descricao
+              });
+            } else {
+              cancelarServico();
+            }
           }
 
         } catch (error) {
@@ -102,7 +114,7 @@ export default function TelaPrincipalProfissional({ navigation }) {
         }
       }
       carregarDadosIniciais();
-    }, [])
+    }, [servicoAtivo])
   );
 
   useEffect(() => {
@@ -188,7 +200,13 @@ export default function TelaPrincipalProfissional({ navigation }) {
     if (!error) {
       setOnline(false);
       setFilaServicos([]); 
-      setServicoAtivo(servico);
+
+      iniciarServico({
+        id: servico.id,
+        nomeCliente: servico.nomeCliente,
+        descricao: servico.descricao
+      });
+      
       navigation.navigate('TelaChatProfissional', {
         profissionalNome: servico.nomeCliente,
         dadosServico: servico,
@@ -270,6 +288,7 @@ export default function TelaPrincipalProfissional({ navigation }) {
   const alturaBase = 190;
   const alturaFiltro = 240;
   const alturaFiltroAberto = 380; 
+  
   const alturaCaixa = !mostrandoFiltros ? alturaBase : (dropdownAberto ? alturaFiltroAberto : alturaFiltro);
   const espacoExtraBotao = insets.bottom > 0 ? insets.bottom : 15;
 
@@ -288,7 +307,6 @@ export default function TelaPrincipalProfissional({ navigation }) {
       </MapView>
 
       <View style={[styles.camadaSobreposicao, { paddingTop: insets.top }]} pointerEvents="box-none">
-
         <View style={[styles.headerFlutuante, { justifyContent: servicoAtivo ? 'space-between' : 'flex-end' }]} pointerEvents="box-none">
           
           {servicoAtivo && (
