@@ -17,26 +17,29 @@ const CARD_BG = '#EAEAEA';
 
 export default function TelaPerfilProfissional({ navigation, route }) {
   const { profissionalId, profissionalNome, profissionalFoto } = route.params ?? {};
-
   const [carregando, setCarregando] = useState(true);
   const [perfil, setPerfil] = useState(null);
   const [especialidadesAberta, setEspecialidadesAberta] = useState(false);
 
   useEffect(() => {
     async function carregarPerfil() {
+      if (!profissionalId) {
+        setCarregando(false);
+        return;
+      }
+
       try {
         const { data: usuario } = await supabase
           .from('usuarios')
           .select('nome, sobrenome, avaliacaomedia')
           .eq('id', profissionalId)
-          .single();
+          .maybeSingle();
 
         const { data: documento } = await supabase
           .from('documentos_profissional')
           .select('fotoperfilurl')
           .eq('idprofissional', profissionalId)
-          .single();
-
+          .maybeSingle();
         
         const { data: profissoes } = await supabase
           .from('profissoes_profissional')
@@ -47,7 +50,7 @@ export default function TelaPerfilProfissional({ navigation, route }) {
           .from('servicos')
           .select('*', { count: 'exact', head: true })
           .eq('idprofissional', profissionalId)
-          .eq('status', 'concluido');
+          .eq('status', 'finalizado');
 
         const { data: fixados } = await supabase
           .from('avaliacoes')
@@ -66,7 +69,7 @@ export default function TelaPerfilProfissional({ navigation, route }) {
           fixados: fixados ?? [],
         });
       } catch (err) {
-        console.log('ERRO GERAL:', err);
+        console.log('ERRO GERAL AO CARREGAR PERFIL:', err);
         setPerfil({
           nome: profissionalNome ?? 'Profissional',
           sobrenome: '',
@@ -106,7 +109,7 @@ export default function TelaPerfilProfissional({ navigation, route }) {
           <View style={styles.card}>
             <View style={styles.perfilRow}>
               <View style={styles.avatarCirculo}>
-                {perfil.foto ? (
+                {perfil?.foto ? (
                   <Image source={{ uri: perfil.foto }} style={styles.avatarImage} />
                 ) : (
                   <Ionicons name="person-outline" size={45} color="#000" />
@@ -115,18 +118,18 @@ export default function TelaPerfilProfissional({ navigation, route }) {
 
               <View style={styles.perfilInfo}>
                 <Text style={styles.nomeText}>
-                  {perfil.nome}{perfil.sobrenome ? ` ${perfil.sobrenome}` : ''}
+                  {perfil?.nome}{perfil?.sobrenome ? ` ${perfil.sobrenome}` : ''}
                 </Text>
 
                 <View style={styles.tagsRow}>
-                  {perfil.avaliacao !== null && perfil.avaliacao !== undefined && (
+                  {perfil?.avaliacao !== null && perfil?.avaliacao !== undefined && (
                     <View style={styles.tagAzul}>
                       <Ionicons name="star-outline" size={14} color="#FFF" style={{ marginRight: 4 }} />
                       <Text style={styles.tagText}>{Number(perfil.avaliacao).toFixed(1)}</Text>
                     </View>
                   )}
                   <View style={styles.tagAzul}>
-                    <Text style={styles.tagText}>{perfil.qtdServicos} Serviços</Text>
+                    <Text style={styles.tagText}>{perfil?.qtdServicos} Serviços</Text>
                   </View>
                 </View>
               </View>
@@ -138,7 +141,7 @@ export default function TelaPerfilProfissional({ navigation, route }) {
             <Text style={styles.cardTitle}>Atividades</Text>
             <Text style={styles.cardSubtitle}>Comentários fixados</Text>
 
-            {perfil.fixados.length > 0 ? (
+            {perfil?.fixados && perfil.fixados.length > 0 ? (
               <View style={styles.comentariosRow}>
                 {perfil.fixados.map((av) => (
                   <View key={av.id} style={styles.boxComentario}>
@@ -180,7 +183,7 @@ export default function TelaPerfilProfissional({ navigation, route }) {
 
             {especialidadesAberta && (
               <View style={styles.accordionContent}>
-                {perfil.especialidades.length > 0 ? (
+                {perfil?.especialidades && perfil.especialidades.length > 0 ? (
                   perfil.especialidades.map((esp, i) => (
                     <View key={i} style={styles.linhaEspecialidade}>
                       <Ionicons name="checkmark-circle-outline" size={20} color={BLUE_COLOR} />
@@ -201,7 +204,7 @@ export default function TelaPerfilProfissional({ navigation, route }) {
             )}
           </TouchableOpacity>
 
-          {perfil.especialidades.length === 0 && perfil.fixados.length === 0 && (
+          {perfil?.especialidades?.length === 0 && perfil?.fixados?.length === 0 && (
             <View style={[styles.card, styles.vazioCard]}>
               <Ionicons name="person-outline" size={36} color="#B0B0B0" />
               <Text style={styles.vazioTexto}>Perfil ainda sendo preenchido</Text>
