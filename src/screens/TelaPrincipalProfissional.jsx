@@ -173,7 +173,7 @@ export default function TelaPrincipalProfissional({ navigation }) {
       setOnline(false);
       setFilaServicos([]); 
       navigation.navigate('TelaChatProfissional', {
-        profissionalNome: servico.nomeCliente,
+        clienteNome: servico.nomeCliente,
         dadosServico: servico,
       });
     } else {

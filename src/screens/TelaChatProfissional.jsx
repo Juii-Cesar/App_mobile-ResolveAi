@@ -25,7 +25,7 @@ const MSGS_INICIAIS = [
 
 export default function TelaChatProfissional({ navigation, route }) {
   const insets = useSafeAreaInsets();
-  const clienteNome = route?.params?.profissionalNome ?? 'Nome Profissional';
+  const clienteNome = route?.params?.clienteNome ?? 'Cliente';
 
   const [mensagens, setMensagens] = useState(MSGS_INICIAIS);
   const [texto, setTexto] = useState('');
