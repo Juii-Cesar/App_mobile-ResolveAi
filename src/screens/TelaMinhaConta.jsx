@@ -6,7 +6,6 @@ import {
   StyleSheet,
   TextInput,
   Modal,
-  Alert,
   ScrollView,
   Image,
 } from 'react-native';
@@ -26,13 +25,17 @@ export default function TelaMinhaConta() {
   const [email, setEmail]       = useState('');
 
   const [modalPerfilVisivel, setModalPerfilVisivel] = useState(false);
+  const [modalAviso, setModalAviso]                 = useState({ visible: false, titulo: '', mensagem: '', tipo: 'default' });
+  const [modalSairVisivel, setModalSairVisivel]     = useState(false);
   const [editandoNome, setEditandoNome]             = useState(false);
   const [nomeTemp, setNomeTemp]                     = useState('');
+
+  const fecharAviso = () => setModalAviso({ visible: false, titulo: '', mensagem: '', tipo: 'default' });
 
   async function escolherFoto() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permissão necessária', 'Precisamos de acesso à sua galeria.');
+      setModalAviso({ visible: true, titulo: 'Atenção', mensagem: 'Precisamos de acesso à sua galeria.', tipo: 'default' });
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -52,14 +55,11 @@ export default function TelaMinhaConta() {
   }
 
   function salvarConta() {
-    Alert.alert('Salvo', 'Informações atualizadas com sucesso!');
+    setModalAviso({ visible: true, titulo: 'Salvo', mensagem: 'Informações atualizadas com sucesso!', tipo: 'default' });
   }
 
   function sair() {
-    Alert.alert('Sair', 'Deseja sair da sua conta?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', style: 'destructive', onPress: async () => await logout() },
-    ]);
+    setModalSairVisivel(true);
   }
 
 
@@ -171,6 +171,37 @@ export default function TelaMinhaConta() {
 
           </View>
         </TouchableOpacity>
+      </Modal>
+
+      <Modal visible={modalSairVisivel} transparent animationType="fade" onRequestClose={() => setModalSairVisivel(false)}>
+        <View style={styles.overlay}>
+          <View style={styles.modalAvisoCard}>
+            <Text style={styles.modalAvisoTitulo}>Sair:</Text>
+            <Text style={styles.modalAvisoMensagem}>Deseja sair da sua conta?</Text>
+            <View style={styles.modalAvisoBotoes}>
+              <TouchableOpacity style={styles.btnAvisoCancelar} onPress={() => setModalSairVisivel(false)}>
+                <Text style={styles.btnAvisoCancelarTexto}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.btnAvisoPerigo} onPress={async () => { setModalSairVisivel(false); await logout(); }}>
+                <Text style={styles.btnAvisoOkTexto}>Sair</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={modalAviso.visible} transparent animationType="fade" onRequestClose={fecharAviso}>
+        <View style={styles.overlay}>
+          <View style={styles.modalAvisoCard}>
+            <Text style={[styles.modalAvisoTitulo, modalAviso.tipo === 'danger' && styles.modalAvisoTituloDanger]}>
+              {modalAviso.titulo}:
+            </Text>
+            <Text style={styles.modalAvisoMensagem}>{modalAviso.mensagem}</Text>
+            <TouchableOpacity style={styles.btnAvisoOk} onPress={fecharAviso}>
+              <Text style={styles.btnAvisoOkTexto}>Ok</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
 
     </SafeAreaView>
@@ -368,5 +399,89 @@ const styles = StyleSheet.create({
 
     marginRight: 10,
     color: '#111',
+  },
+
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+
+  modalAvisoCard: {
+    width: 280,
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 20,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+
+  modalAvisoTitulo: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 32,
+    color: '#1976D2',
+    lineHeight: 34,
+    marginBottom: 10,
+  },
+
+  modalAvisoTituloDanger: {
+    color: '#D32F2F',
+  },
+
+  modalAvisoMensagem: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 22,
+    color: '#111',
+    lineHeight: 26,
+    marginBottom: 22,
+  },
+
+  modalAvisoBotoes: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+
+  btnAvisoOk: {
+    width: '100%',
+    height: 48,
+    backgroundColor: '#1976D2',
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  btnAvisoCancelar: {
+    flex: 1,
+    height: 48,
+    backgroundColor: '#A0A0A0',
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  btnAvisoPerigo: {
+    flex: 1,
+    height: 48,
+    backgroundColor: '#D50000',
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  btnAvisoOkTexto: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 22,
+    color: '#FFF',
+  },
+
+  btnAvisoCancelarTexto: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 22,
+    color: '#FFF',
   },
 });

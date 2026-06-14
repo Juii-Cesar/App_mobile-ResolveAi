@@ -10,7 +10,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,6 +31,7 @@ export default function TelaEnderecos() {
   const [modalEditar, setModalEditar] = useState(false);
   const [modalExcluir, setModalExcluir] = useState(false);
   const [enderecoSelecionado, setEnderecoSelecionado] = useState(null);
+  const [modalAviso, setModalAviso] = useState({ visible: false, titulo: '', mensagem: '', tipo: 'default' });
 
   const [form, setForm] = useState({
     nome: '',
@@ -40,6 +40,8 @@ export default function TelaEnderecos() {
     numero: '',
     complemento: '',
   });
+
+  const fecharAviso = () => setModalAviso({ visible: false, titulo: '', mensagem: '', tipo: 'default' });
 
   useEffect(() => {
     carregarEnderecos();
@@ -72,7 +74,7 @@ export default function TelaEnderecos() {
 
   const handleAdicionar = async () => {
     if (!form.nome.trim() || !form.rua.trim()) {
-      Alert.alert('Atenção', 'Preencha pelo menos o nome e a rua.');
+      setModalAviso({ visible: true, titulo: 'Atenção', mensagem: 'Preencha pelo menos o nome e a rua.', tipo: 'default' });
       return;
     }
 
@@ -80,7 +82,7 @@ export default function TelaEnderecos() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       const { data, error } = await supabase.from('enderecos_cliente').insert({
         idcliente: user.id,
         titulo: form.nome,
@@ -97,7 +99,7 @@ export default function TelaEnderecos() {
         setModalAdicionar(false);
       }
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível salvar o endereço.');
+      setModalAviso({ visible: true, titulo: 'Erro', mensagem: 'Não foi possível salvar o endereço.', tipo: 'danger' });
     }
   };
 
@@ -115,7 +117,7 @@ export default function TelaEnderecos() {
 
   const handleEditar = async () => {
     if (!form.nome.trim() || !form.rua.trim()) return;
-    
+
     const enderecoCompletoStr = `${form.rua}, ${form.numero}${form.complemento ? ' - ' + form.complemento : ''} - CEP: ${form.cep}`;
 
     try {
@@ -135,7 +137,7 @@ export default function TelaEnderecos() {
         setModalEditar(false);
       }
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível editar o endereço.');
+      setModalAviso({ visible: true, titulo: 'Erro', mensagem: 'Não foi possível editar o endereço.', tipo: 'danger' });
     }
   };
 
@@ -147,14 +149,14 @@ export default function TelaEnderecos() {
   const handleExcluir = async () => {
     try {
       const { error } = await supabase.from('enderecos_cliente').delete().eq('id', enderecoSelecionado.id);
-      
+
       if (!error) {
         setEnderecos((prev) => prev.filter((e) => e.id !== enderecoSelecionado.id));
         setEnderecoSelecionado(null);
         setModalExcluir(false);
       }
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível excluir o endereço.');
+      setModalAviso({ visible: true, titulo: 'Erro', mensagem: 'Não foi possível excluir o endereço.', tipo: 'danger' });
     }
   };
 
@@ -188,7 +190,7 @@ export default function TelaEnderecos() {
                   {endereco.endereco_completo}
                 </Text>
               </View>
-              
+
               <View style={styles.enderecoAcoes}>
                 <TouchableOpacity onPress={() => abrirEditar(endereco)}>
                   <Text style={styles.acaoEditar}>Editar</Text>
@@ -237,6 +239,20 @@ export default function TelaEnderecos() {
                 <Text style={styles.btnNaoTexto}>Não</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={modalAviso.visible} transparent animationType="fade" onRequestClose={fecharAviso}>
+        <View style={styles.overlay}>
+          <View style={styles.modalAvisoCard}>
+            <Text style={[styles.modalAvisoTitulo, modalAviso.tipo === 'danger' && styles.modalAvisoTituloDanger]}>
+              {modalAviso.titulo}:
+            </Text>
+            <Text style={styles.modalAvisoMensagem}>{modalAviso.mensagem}</Text>
+            <TouchableOpacity style={styles.btnAvisoOk} onPress={fecharAviso}>
+              <Text style={styles.btnAvisoOkTexto}>Ok</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -475,5 +491,46 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontSize: 20,
     fontFamily: "Homenaje_400Regular"
-  }
+  },
+  modalAvisoCard: {
+    width: 280,
+    backgroundColor: "#FFF",
+    borderRadius: 20,
+    padding: 20,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  modalAvisoTitulo: {
+    fontFamily: "Homenaje_400Regular",
+    fontSize: 32,
+    color: BLUE_COLOR,
+    lineHeight: 34,
+    marginBottom: 10,
+  },
+  modalAvisoTituloDanger: {
+    color: '#D32F2F',
+  },
+  modalAvisoMensagem: {
+    fontFamily: "Homenaje_400Regular",
+    fontSize: 22,
+    color: '#111',
+    lineHeight: 26,
+    marginBottom: 22,
+  },
+  btnAvisoOk: {
+    width: '100%',
+    height: 48,
+    backgroundColor: BLUE_COLOR,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  btnAvisoOkTexto: {
+    fontFamily: "Homenaje_400Regular",
+    fontSize: 22,
+    color: '#FFF',
+  },
 });

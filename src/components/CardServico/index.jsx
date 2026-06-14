@@ -5,8 +5,8 @@ import {
   TouchableOpacity,
   View,
   TextInput,
-  Alert,
   Image,
+  Modal,
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
@@ -50,11 +50,14 @@ export const CardServico = ({
   const [avaliacao, setAvaliacao] = useState(avaliacaoInicial);
   const [comentario, setComentario] = useState(comentarioInicial);
   const [foiAvaliado, setFoiAvaliado] = useState(avaliado);
+  const [modalAviso, setModalAviso] = useState({ visible: false, titulo: '', mensagem: '', tipo: 'default' });
+
+  const fecharAviso = () => setModalAviso({ visible: false, titulo: '', mensagem: '', tipo: 'default' });
 
   async function enviarAvaliacao() {
     try {
       if (avaliacao === 0) {
-        Alert.alert("Avaliação", "Selecione uma nota com as estrelas.");
+        setModalAviso({ visible: true, titulo: 'Avaliação', mensagem: 'Selecione uma nota com as estrelas.', tipo: 'default' });
         return;
       }
 
@@ -81,10 +84,10 @@ export const CardServico = ({
         
       setFoiAvaliado(true);
 
-      Alert.alert("Sucesso", "Avaliação enviada com sucesso!");
+      setModalAviso({ visible: true, titulo: 'Sucesso', mensagem: 'Avaliação enviada com sucesso!', tipo: 'default' });
     } catch (error) {
       console.log(error);
-      Alert.alert("Erro", "Não foi possível enviar a avaliação.");
+      setModalAviso({ visible: true, titulo: 'Erro', mensagem: 'Não foi possível enviar a avaliação.', tipo: 'danger' });
     }
   }
 
@@ -128,6 +131,20 @@ export const CardServico = ({
           <Text style={styles.botaoTexto}>Enviar Avaliação</Text>
         </TouchableOpacity>
       )}
+
+      <Modal visible={modalAviso.visible} transparent animationType="fade" onRequestClose={fecharAviso}>
+        <View style={styles.overlay}>
+          <View style={styles.modalAvisoCard}>
+            <Text style={[styles.modalAvisoTitulo, modalAviso.tipo === 'danger' && styles.modalAvisoTituloDanger]}>
+              {modalAviso.titulo}:
+            </Text>
+            <Text style={styles.modalAvisoMensagem}>{modalAviso.mensagem}</Text>
+            <TouchableOpacity style={styles.btnAvisoOk} onPress={fecharAviso}>
+              <Text style={styles.btnAvisoOkTexto}>Ok</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -221,5 +238,52 @@ const styles = StyleSheet.create({
     fontFamily: 'Homenaje_400Regular',
     color: "#FFF",
     fontSize: 22,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalAvisoCard: {
+    width: 280,
+    backgroundColor: "#FFF",
+    borderRadius: 20,
+    padding: 20,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  modalAvisoTitulo: {
+    fontFamily: "Homenaje_400Regular",
+    fontSize: 32,
+    color: BLUE_COLOR,
+    lineHeight: 34,
+    marginBottom: 10,
+  },
+  modalAvisoTituloDanger: {
+    color: '#D32F2F',
+  },
+  modalAvisoMensagem: {
+    fontFamily: "Homenaje_400Regular",
+    fontSize: 22,
+    color: '#111',
+    lineHeight: 26,
+    marginBottom: 22,
+  },
+  btnAvisoOk: {
+    width: '100%',
+    height: 48,
+    backgroundColor: BLUE_COLOR,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  btnAvisoOkTexto: {
+    fontFamily: "Homenaje_400Regular",
+    fontSize: 22,
+    color: '#FFF',
   },
 });
