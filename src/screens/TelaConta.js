@@ -249,7 +249,6 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   btnVoltarChat: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
