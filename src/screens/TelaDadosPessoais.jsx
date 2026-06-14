@@ -92,7 +92,7 @@ export default function TelaDadosPessoais({ navigation }) {
     <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
       <KeyboardAvoidingView 
         style={{ flex: 1 }} 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} bounces={false}>
           <View style={styles.header}>
@@ -152,13 +152,13 @@ export default function TelaDadosPessoais({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#DBDBDB' },
-  header: { backgroundColor: BLUE_COLOR, height: 220, alignItems: 'center' },
+  header: { backgroundColor: BLUE_COLOR, height: 260, alignItems: 'center' },
   logoContainer: {
     width: '100%',
-    height: 120,
+    height: 140,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20
+    marginTop: 30
   },
   content: { 
     flex: 1, 
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 100, 
     paddingHorizontal: 30, 
     alignItems: 'center',
-    paddingTop: 40, 
+    paddingTop: 60, 
   },
   title: {
     fontFamily: 'Homenaje_400Regular',
