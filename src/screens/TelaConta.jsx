@@ -37,12 +37,8 @@ export default function TelaConta() {
         </View>
 
         <View style={styles.botoesGrid}>
-          <TouchableOpacity style={styles.botao} onPress={() => navigation.navigate('TelaMinhaConta')}>
+          <TouchableOpacity style={styles.botaoGrande} onPress={() => navigation.navigate('TelaMinhaConta')}>
             <Text style={styles.botaoTexto}>Conta</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.botao} onPress={() => navigation.navigate('TelaFavoritos')}>
-            <Text style={styles.botaoTexto}>Favoritos</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.botaoGrande} onPress={() => navigation.navigate('TelaEnderecos')}>
@@ -131,7 +127,7 @@ export default function TelaConta() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#CBCBCB',
+    backgroundColor: '#D9D9D9',
   },
   container: {
     flex: 1,
@@ -145,7 +141,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    backgroundColor: '#CBCBCB',
+    backgroundColor: '#D9D9D9',
     marginBottom: 16,
   },
   headerDireita: {
@@ -249,7 +245,6 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   btnVoltarChat: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
