@@ -15,7 +15,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../services/supabase';
 
 const BLUE = '#076BDE';
-
 const SUGESTOES = ['Olá', 'Está vindo ?'];
 
 export default function TelaChatProfissional({ navigation, route }) {
@@ -34,12 +33,8 @@ export default function TelaChatProfissional({ navigation, route }) {
   const flatRef = useRef(null);
 
   useEffect(() => {
-    const show = Keyboard.addListener('keyboardDidShow', e => {
-      setKeyboardHeight(e.endCoordinates.height);
-    });
-    const hide = Keyboard.addListener('keyboardDidHide', () => {
-      setKeyboardHeight(0);
-    });
+    const show = Keyboard.addListener('keyboardDidShow', e => setKeyboardHeight(e.endCoordinates.height));
+    const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboardHeight(0));
     return () => { show.remove(); hide.remove(); };
   }, []);
 
@@ -51,7 +46,7 @@ export default function TelaChatProfissional({ navigation, route }) {
       setUserId(user.id);
 
       let { data: salaChat } = await supabase.from('chats').select('id').eq('servico_id', servicoId).maybeSingle();
-
+      
       if (!salaChat) {
         const { data: servDados } = await supabase.from('servicos').select('idcliente, idprofissional').eq('id', servicoId).single();
         if (servDados) {
@@ -72,7 +67,6 @@ export default function TelaChatProfissional({ navigation, route }) {
 
       const idDaSala = salaChat?.id;
       if (!idDaSala) return;
-      
       setChatId(idDaSala);
 
       const { data: antigas } = await supabase
@@ -92,6 +86,7 @@ export default function TelaChatProfissional({ navigation, route }) {
       channel = supabase.channel(`chat_${idDaSala}`)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_mensagens', filter: `chat_id=eq.${idDaSala}` }, 
           payload => {
+            console.log("PROFISSIONAL RECEBEU MENSAGEM:", payload.new);
             const novaMsg = payload.new;
             if (novaMsg.remetente_id !== user.id) {
               setMensagens(prev => [...prev, {
@@ -101,11 +96,12 @@ export default function TelaChatProfissional({ navigation, route }) {
               }]);
             }
           }
-        ).subscribe();
+        ).subscribe((status) => {
+          console.log("STATUS DA INSCRIÇÃO DO PROFISSIONAL NO CHAT:", status);
+        });
     }
 
     carregarChat();
-
     return () => { if (channel) supabase.removeChannel(channel); };
   }, [servicoId]);
 
@@ -121,11 +117,14 @@ export default function TelaChatProfissional({ navigation, route }) {
     setMensagens(prev => [...prev, { id: tempId, texto: novaMensagem, minha: true }]);
     setTexto('');
 
-    await supabase.from('chat_mensagens').insert({
+    const { error } = await supabase.from('chat_mensagens').insert({
       chat_id: chatId,
       remetente_id: userId,
-      mensagem: novaMensagem
+      mensagem: novaMensagem,
+      visualizada: false
     });
+
+    if (error) console.log("ERRO AO ENVIAR MENSAGEM (PROFISSIONAL):", error);
   }
 
   function handleFinalizar() {
@@ -135,9 +134,7 @@ export default function TelaChatProfissional({ navigation, route }) {
   function renderMensagem({ item }) {
     return (
       <View style={[styles.bolha, item.minha ? styles.bolhaMinha : styles.bolhaDele]}>
-        <Text style={[styles.bolhaTexto, item.minha && styles.bolhaTextoMinha]}>
-          {item.texto}
-        </Text>
+        <Text style={[styles.bolhaTexto, item.minha && styles.bolhaTextoMinha]}>{item.texto}</Text>
       </View>
     );
   }
@@ -148,63 +145,27 @@ export default function TelaChatProfissional({ navigation, route }) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.btnVoltar}>
           <Ionicons name="arrow-back" size={26} color="#FFF" />
         </TouchableOpacity>
-
         <Text style={styles.headerNome}>{clienteNome}</Text>
-
         <TouchableOpacity style={styles.btnFinalizar} onPress={handleFinalizar}>
           <Text style={styles.btnFinalizarTexto}>Finalizar serviço</Text>
         </TouchableOpacity>
       </View>
-
       <View style={{ flex: 1, marginBottom: keyboardHeight }}>
-        <FlatList
-          ref={flatRef}
-          data={mensagens}
-          keyExtractor={item => item.id}
-          renderItem={renderMensagem}
-          contentContainerStyle={styles.listaPadding}
-          showsVerticalScrollIndicator={false}
-        />
-
+        <FlatList ref={flatRef} data={mensagens} keyExtractor={item => item.id} renderItem={renderMensagem} contentContainerStyle={styles.listaPadding} showsVerticalScrollIndicator={false} />
         <View style={styles.sugestoesRow}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
             {SUGESTOES.map((s, i) => (
-              <TouchableOpacity key={i} style={styles.sugestao} onPress={() => enviar(s)}>
-                <Text style={styles.sugestaoTexto}>{s}</Text>
-              </TouchableOpacity>
+              <TouchableOpacity key={i} style={styles.sugestao} onPress={() => enviar(s)}><Text style={styles.sugestaoTexto}>{s}</Text></TouchableOpacity>
             ))}
           </ScrollView>
         </View>
-
         <View style={[styles.inputRow, { paddingBottom: insets.bottom + 10 }]}>
-          <TextInput
-            style={styles.input}
-            placeholder={modoAnotacao ? 'Anotações...' : 'Mensagem...'}
-            placeholderTextColor="#AAA"
-            value={modoAnotacao ? anotacao : texto}
-            onChangeText={modoAnotacao ? setAnotacao : setTexto}
-            onSubmitEditing={modoAnotacao ? undefined : () => enviar()}
-            returnKeyType={modoAnotacao ? 'done' : 'send'}
-            multiline={modoAnotacao}
-          />
-
-          <TouchableOpacity
-            style={[styles.btnIcone, modoAnotacao && styles.btnIconeAtivo]}
-            onPress={() => setModoAnotacao(!modoAnotacao)}
-          >
-            <Ionicons
-              name={modoAnotacao ? 'chatbubble-outline' : 'document-text-outline'}
-              size={26}
-              color={modoAnotacao ? '#FFF' : '#333'}
-            />
+          <TextInput style={styles.input} placeholder={modoAnotacao ? 'Anotações...' : 'Mensagem...'} placeholderTextColor="#AAA" value={modoAnotacao ? anotacao : texto} onChangeText={modoAnotacao ? setAnotacao : setTexto} onSubmitEditing={modoAnotacao ? undefined : () => enviar()} returnKeyType={modoAnotacao ? 'done' : 'send'} multiline={modoAnotacao} />
+          <TouchableOpacity style={[styles.btnIcone, modoAnotacao && styles.btnIconeAtivo]} onPress={() => setModoAnotacao(!modoAnotacao)}>
+            <Ionicons name={modoAnotacao ? 'chatbubble-outline' : 'document-text-outline'} size={26} color={modoAnotacao ? '#FFF' : '#333'} />
           </TouchableOpacity>
-
           {!modoAnotacao && (
-            <TouchableOpacity
-              style={[styles.btnEnviar, !texto.trim() && styles.btnEnviarDisabled]}
-              onPress={() => enviar()}
-              disabled={!texto.trim()}
-            >
+            <TouchableOpacity style={[styles.btnEnviar, !texto.trim() && styles.btnEnviarDisabled]} onPress={() => enviar()} disabled={!texto.trim()}>
               <Ionicons name="send" size={24} color="#FFF" />
             </TouchableOpacity>
           )}

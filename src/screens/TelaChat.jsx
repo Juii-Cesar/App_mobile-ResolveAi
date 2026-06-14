@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Modal
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,13 +25,13 @@ export default function TelaChat({ navigation, route }) {
   const profissionalId   = route?.params?.profissionalId   ?? 'default';
   const categoria        = route?.params?.categoria        ?? '';
   const descricao        = route?.params?.descricao        ?? '';
-
-  const { iniciarServico, cancelarServico } = useServico();
-
+  const { iniciarServico, finalizarServico } = useServico();
   const [mensagens, setMensagens] = useState([]);
   const [texto, setTexto] = useState('');
   const [chatId, setChatId] = useState(null);
   const [userId, setUserId] = useState(null);
+  const [servicoFinalizado, setServicoFinalizado] = useState(null); 
+  
   const flatRef = useRef(null);
 
   useEffect(() => {
@@ -44,7 +45,9 @@ export default function TelaChat({ navigation, route }) {
   }, []);
 
   useEffect(() => {
-    let channel;
+    let channelChat;
+    let channelServico;
+
     async function iniciarChat() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -63,7 +66,7 @@ export default function TelaChat({ navigation, route }) {
       if (!sId) return;
 
       let { data: salaChat } = await supabase.from('chats').select('id').eq('servico_id', sId).maybeSingle();
-
+      
       if (!salaChat) {
         const { data: novaSala, error } = await supabase.from('chats').insert({
           servico_id: sId,
@@ -93,21 +96,32 @@ export default function TelaChat({ navigation, route }) {
       if (antigas) {
         setMensagens(antigas.map(m => ({
           id: m.id.toString(),
-          texto: m.mensagem,
+          texto: m.mensagem, 
           minha: m.remetente_id === user.id
         })));
       }
 
-      channel = supabase.channel(`chat_${idDaSala}`)
+      channelChat = supabase.channel(`chat_${idDaSala}`)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_mensagens', filter: `chat_id=eq.${idDaSala}` }, 
           payload => {
             const novaMsg = payload.new;
             if (novaMsg.remetente_id !== user.id) {
               setMensagens(prev => [...prev, {
                 id: novaMsg.id.toString(),
-                texto: novaMsg.mensagem,
+                texto: novaMsg.mensagem, 
                 minha: false
               }]);
+            }
+          }
+        ).subscribe();
+
+      channelServico = supabase.channel(`status_servico_${sId}`)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'servicos', filter: `id=eq.${sId}` }, 
+          payload => {
+            console.log('STATUS DO SERVIÇO MUDOU:', payload.new.status);
+            if (payload.new.status === 'finalizado') {
+              const valorFormatado = payload.new.valor ? Number(payload.new.valor).toFixed(2).replace('.', ',') : '0,00';
+              setServicoFinalizado({ valor: valorFormatado });
             }
           }
         ).subscribe();
@@ -115,7 +129,10 @@ export default function TelaChat({ navigation, route }) {
 
     iniciarChat();
 
-    return () => { if (channel) supabase.removeChannel(channel); };
+    return () => { 
+      if (channelChat) supabase.removeChannel(channelChat); 
+      if (channelServico) supabase.removeChannel(channelServico);
+    };
   }, []);
 
   useEffect(() => {
@@ -133,26 +150,8 @@ export default function TelaChat({ navigation, route }) {
     await supabase.from('chat_mensagens').insert({
       chat_id: chatId,
       remetente_id: userId,
-      mensagem: novaMensagem
+      mensagem: novaMensagem 
     });
-  }
-
-  function handleEncerrar() {
-    Alert.alert(
-      'Encerrar serviço',
-      'Deseja realmente cancelar o serviço em andamento?',
-      [
-        { text: 'Não', style: 'cancel' },
-        {
-          text: 'Sim, cancelar',
-          style: 'destructive',
-          onPress: () => {
-            cancelarServico();
-            navigation.popToTop();
-          },
-        },
-      ],
-    );
   }
 
   function renderMensagem({ item }) {
@@ -167,6 +166,31 @@ export default function TelaChat({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+
+      <Modal visible={!!servicoFinalizado} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Ionicons name="checkmark-circle" size={80} color="#388E3C" />
+            <Text style={styles.modalTitle}>Serviço Finalizado!</Text>
+            <Text style={styles.modalText}>O profissional encerrou o atendimento.</Text>
+            
+            <Text style={styles.modalValor}>R$ {servicoFinalizado?.valor}</Text>
+            
+            <TouchableOpacity 
+              style={styles.btnPagar} 
+              onPress={() => {
+                finalizarServico();
+                Alert.alert('Pagamento', 'Função em desenvolvimento.', [
+                  { text: 'OK', onPress: () => navigation.popToTop() }
+                ]);
+              }}
+            >
+              <Text style={styles.btnPagarTexto}>Ir para Pagamento</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.btnVoltar}>
           <Ionicons name="arrow-back" size={24} color="#FFF" />
@@ -185,10 +209,7 @@ export default function TelaChat({ navigation, route }) {
           <Ionicons name="information-circle-outline" size={16} color="#555" />
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={handleEncerrar} style={styles.btnEncerrar}>
-          <Ionicons name="close-circle-outline" size={20} color="#D32F2F" />
-          <Text style={styles.btnEncerrarTexto}>Encerrar</Text>
-        </TouchableOpacity>
+
       </View>
 
       <KeyboardAvoidingView
@@ -238,12 +259,19 @@ export default function TelaChat({ navigation, route }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#D9D9D9' },
+
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 25 },
+  modalCard: { backgroundColor: '#FFF', borderRadius: 25, padding: 30, width: '100%', alignItems: 'center', elevation: 15, shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.3, shadowRadius: 10 },
+  modalTitle: { fontFamily: 'Homenaje_400Regular', fontSize: 36, color: '#111', marginTop: 15 },
+  modalText: { fontFamily: 'Homenaje_400Regular', fontSize: 20, color: '#555', textAlign: 'center', marginTop: 5 },
+  modalValor: { fontFamily: 'Homenaje_400Regular', fontSize: 46, color: '#388E3C', marginVertical: 25 },
+  btnPagar: { backgroundColor: BLUE, width: '100%', paddingVertical: 16, borderRadius: 15, alignItems: 'center', borderWidth: 1.5, borderColor: '#333' },
+  btnPagarTexto: { fontFamily: 'Homenaje_400Regular', fontSize: 24, color: '#FFF' },
   header: { height: 60, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, backgroundColor: '#D9D9D9', borderBottomWidth: 1, borderBottomColor: '#9BA7B1', gap: 12 },
   btnVoltar: { width: 38, height: 38, borderRadius: 19, backgroundColor: BLUE, justifyContent: 'center', alignItems: 'center' },
   headerNomeArea: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 5 },
   headerNome: { fontFamily: 'Homenaje_400Regular', fontSize: 20, color: '#111' },
-  btnEncerrar: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, borderWidth: 1.5, borderColor: '#D32F2F' },
-  btnEncerrarTexto: { fontFamily: 'Homenaje_400Regular', fontSize: 14, color: '#D32F2F' },
+
   listaPadding: { paddingHorizontal: 16, paddingVertical: 12, gap: 8 },
   bolha: { maxWidth: '70%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, marginVertical: 4 },
   bolhaMinha: { alignSelf: 'flex-end', backgroundColor: BLUE, borderBottomRightRadius: 4 },
