@@ -1,205 +1,176 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-  StyleSheet,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import LogoIcon from '../assets/icons/LogoIcon'
+import React, { useEffect, useState } from "react";
+import { View, FlatList, StyleSheet, ActivityIndicator } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const servicos = [
-  { id: '1' },
-  { id: '2' },
-  { id: '3' },
-];
-
-function Estrelas({ avaliacao, onPress }) {
-  return (
-    <View style={styles.estrelasContainer}>
-      {[1, 2, 3, 4, 5].map((n) => (
-        <TouchableOpacity key={n} onPress={() => onPress(n)} activeOpacity={0.7}>
-          <Ionicons
-            name={n <= avaliacao ? 'star' : 'star-outline'}
-            size={17}
-            color={n <= avaliacao ? '#F5A623' : '#999'}
-          />
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-}
-
-function CardServico() {
-  const [avaliacao, setAvaliacao] = React.useState(0);
-  const [comentario, setComentario] = React.useState('');
-
-  return (
-    <View style={styles.card}>
-
-    
-      <Text style={styles.dataServico}>Data serviço</Text>
-
-    
-      <View style={styles.cardMeio}>
-        <View style={styles.avatar}>
-          <Ionicons name="person-outline" size={24} color="#555" />
-        </View>
-
-        <View style={styles.cardInfo}>
-          <Text style={styles.cardNome}>Nome</Text>
-          <Text style={styles.cardProfissao}>Profissão</Text>
-        </View>
-
-        <Estrelas avaliacao={avaliacao} onPress={setAvaliacao} />
-      </View>
-
-      
-      <TextInput
-        style={styles.comentarioInput}
-        placeholder="Comentário..."
-        placeholderTextColor="#bbb"
-        value={comentario}
-        onChangeText={setComentario}
-      />
-    </View>
-  );
-}
+import LogoIcon from "../assets/icons/LogoIcon";
+import { CardServico } from "../components/CardServico";
+import { supabase } from "../services/supabase";
 
 export default function TelaServicos() {
+  const [servicos, setServicos] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    buscarServicos();
+  }, []);
+
+  async function buscarServicos() {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      const { data, error } = await supabase
+        .from("servicos")
+        .select(
+          `
+          *,
+          usuarios!servicos_idprofissional_fkey (
+            nome,
+            sobrenome
+          ),
+          profissoes (
+            nome
+          )
+        `,
+        )
+        .eq("idcliente", user.id)
+        .eq("status", "finalizado")
+        .order("criadoem", { ascending: false });
+
+      if (error) throw error;
+
+      const idsProfissionais = [
+        ...new Set(data.map((item) => item.idprofissional).filter(Boolean)),
+      ];
+
+      const idsServicos = data.map((item) => item.id);
+
+      let documentos = [];
+      let avaliacoes = [];
+
+      if (idsProfissionais.length > 0) {
+        const { data: docs, error: erroDocs } = await supabase
+          .from("documentos_profissional")
+          .select("idprofissional, fotoperfilurl")
+          .in("idprofissional", idsProfissionais);
+
+        if (erroDocs) {
+          console.log("Erro ao buscar fotos:", erroDocs);
+        } else {
+          documentos = docs || [];
+        }
+      }
+
+      if (idsServicos.length > 0) {
+        const { data: avals, error: erroAvaliacoes } = await supabase
+          .from("avaliacoes")
+          .select("*")
+          .in("idservico", idsServicos);
+
+        if (erroAvaliacoes) {
+          console.log("Erro ao buscar avaliações:", erroAvaliacoes);
+        } else {
+          avaliacoes = avals || [];
+        }
+      }
+
+      const servicosComDados = data.map((servico) => {
+        const documento = documentos.find(
+          (doc) => doc.idprofissional === servico.idprofissional,
+        );
+
+        const avaliacao = avaliacoes.find((av) => av.idservico === servico.id);
+
+        return {
+          ...servico,
+          fotoPerfil: documento?.fotoperfilurl || null,
+          avaliacaoData: avaliacao || null,
+        };
+      });
+
+      setServicos(servicosComDados);
+    } catch (err) {
+      console.log("Erro TelaServicos:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <View style={styles.header}>
-        <LogoIcon width={50} height={50}/>
+        <LogoIcon width={50} height={50} />
       </View>
 
       <FlatList
         data={servicos}
-        keyExtractor={(item) => item.id}
-        renderItem={() => <CardServico />}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <CardServico
+            servicoId={item.id}
+            profissionalId={item.idprofissional}
+            dt={new Date(item.criadoem).toLocaleDateString("pt-BR")}
+            nome={`${item.usuarios?.nome || ""} ${
+              item.usuarios?.sobrenome || ""
+            }`}
+            profissao={item.profissoes?.nome || ""}
+            fotoPerfil={item.fotoPerfil}
+            avaliado={item.avaliado}
+            avaliacaoInicial={item.avaliacaoData?.nota || 0}
+            comentarioInicial={item.avaliacaoData?.comentario || ""}
+          />
+        )}
         contentContainerStyle={styles.lista}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <LogoIcon width={60} height={60} />
+          </View>
+        }
       />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#D9D9D9",
+  },
 
-safeArea: {
-  flex: 1,
-  backgroundColor: '#D9D9D9',
-},
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 
-header: {
-  height: 82,
-  borderBottomWidth: 1,
-  borderBottomColor: '#9BA7B1',
-  alignItems: 'flex-end',
-  justifyContent: 'center',
-  paddingRight: 16,
-  backgroundColor: '#D9D9D9',
-},
+  header: {
+    height: 82,
+    borderBottomWidth: 1,
+    borderBottomColor: "#9BA7B1",
+    alignItems: "flex-end",
+    justifyContent: "center",
+    paddingRight: 16,
+    backgroundColor: "#D9D9D9",
+  },
 
-logoCircle: {
-  width: 46,
-  height: 46,
-  borderRadius: 30,
-  borderWidth: 2,
-  borderColor: '#1565C0',
-  alignItems: 'center',
-  justifyContent: 'center',
-  backgroundColor: '#D9D9D9',
-},
+  lista: {
+    paddingTop: 28,
+    paddingBottom: 40,
+    gap: 34,
+  },
 
-logoText: {
-  color: '#1565C0',
-  fontSize: 22,
-  fontWeight: 'bold',
-},
-
-lista: {
-  paddingTop: 28,
-  paddingBottom: 40,
-  gap: 34,
-},
-
-card: {
-  width: '78%',
-  alignSelf: 'center',
-  backgroundColor: '#ECECEC',
-  borderRadius: 24,
-  borderWidth: 2,
-  borderColor: '#222',
-  paddingHorizontal: 14,
-  paddingVertical: 12,
-},
-
-dataServico: {
-  fontSize: 16,
-  color: '#111',
-  textAlign: 'right',
-  marginBottom: 8,
-  fontFamily: 'Homenaje_400Regular',
-},
-
-cardMeio: {
-  flexDirection: 'row',
-  alignItems: 'center',
-},
-
-avatar: {
-  width: 56,
-  height: 56,
-  borderRadius: 50,
-  borderWidth: 2,
-  borderColor: '#222',
-  alignItems: 'center',
-  justifyContent: 'center',
-  backgroundColor: '#E6ECF2',
-  marginRight: 12,
-},
-
-cardInfo: {
-  flex: 1,
-},
-
-cardNome: {
-  fontSize: 24,
-  color: '#111',
-  lineHeight: 24,
-  fontFamily: 'Homenaje_400Regular',
-},
-
-cardProfissao: {
-  fontSize: 20,
-  color: '#222',
-  lineHeight: 20,
-  fontFamily: 'Homenaje_400Regular',
-},
-
-estrelasContainer: {
-  flexDirection: 'row',
-  gap: 2,
-  marginBottom: 10,
-},
-
-comentarioInput: {
-  marginTop: 10,
-  height: 28,
-  borderWidth: 1,
-  borderColor: '#BEBEBE',
-  borderRadius: 20,
-  paddingHorizontal: 12,
-  backgroundColor: '#DCDCDC',
-  fontSize: 15,
-  color: '#333',
-  fontFamily: 'Homenaje_400Regular',
-  paddingTop: 0,
-  paddingBottom: 0,
-},
+  emptyContainer: {
+    marginTop: 80,
+    alignItems: "center",
+  },
 });
