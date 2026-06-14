@@ -19,8 +19,7 @@ export function RootNavigator() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("EVENTO:", event);
-      console.log("SESSION:", session);
+
 
       setSession(session);
 

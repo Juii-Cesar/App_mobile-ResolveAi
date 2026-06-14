@@ -13,5 +13,3 @@ export const supabase = createClient(
       detectSessionInUrl: false,
     },
   })
-  console.log(process.env.EXPO_PUBLIC_SUPABASE_URL);
-  console.log(process.env.EXPO_PUBLIC_SUPABASE_KEY);
