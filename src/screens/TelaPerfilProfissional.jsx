@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +18,7 @@ const CARD_BG = '#EAEAEA';
 
 export default function TelaPerfilProfissional({ navigation, route }) {
   const { profissionalId, profissionalNome, profissionalFoto } = route.params ?? {};
+
   const [carregando, setCarregando] = useState(true);
   const [perfil, setPerfil] = useState(null);
   const [especialidadesAberta, setEspecialidadesAberta] = useState(false);
@@ -40,10 +42,10 @@ export default function TelaPerfilProfissional({ navigation, route }) {
           .select('fotoperfilurl')
           .eq('idprofissional', profissionalId)
           .maybeSingle();
-        
+
         const { data: profissoes } = await supabase
           .from('profissoes_profissional')
-          .select('profissao, tempo_experiencia')
+          .select('profissao, tempo_experiencia, certificado_url')
           .eq('profissional_id', profissionalId);
 
         const { count: qtdServicos } = await supabase
@@ -136,7 +138,6 @@ export default function TelaPerfilProfissional({ navigation, route }) {
             </View>
           </View>
 
-          
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Atividades</Text>
             <Text style={styles.cardSubtitle}>Comentários fixados</Text>
@@ -187,6 +188,7 @@ export default function TelaPerfilProfissional({ navigation, route }) {
                   perfil.especialidades.map((esp, i) => (
                     <View key={i} style={styles.linhaEspecialidade}>
                       <Ionicons name="checkmark-circle-outline" size={20} color={BLUE_COLOR} />
+                      
                       <View style={{ flex: 1 }}>
                         <Text style={styles.itemEspecialidade}>{esp.profissao}</Text>
                         {esp.tempo_experiencia ? (
@@ -195,6 +197,17 @@ export default function TelaPerfilProfissional({ navigation, route }) {
                           </Text>
                         ) : null}
                       </View>
+
+                      {esp.certificado_url ? (
+                        <TouchableOpacity 
+                          style={styles.btnCertificado}
+                          onPress={() => Linking.openURL(esp.certificado_url)}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name="document-text-outline" size={14} color={BLUE_COLOR} />
+                          <Text style={styles.btnCertificadoTexto}>Ver cert.</Text>
+                        </TouchableOpacity>
+                      ) : null}
                     </View>
                   ))
                 ) : (
@@ -256,10 +269,28 @@ const styles = StyleSheet.create({
   comentarioCorpo: { fontFamily: 'Homenaje_400Regular', fontSize: 13, color: '#8A8A8A' },
   accordionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   accordionContent: { marginTop: 12, gap: 10 },
-  linhaEspecialidade: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  linhaEspecialidade: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   itemEspecialidade: { fontFamily: 'Homenaje_400Regular', fontSize: 20, color: '#333' },
   itemSubtexto: { fontFamily: 'Homenaje_400Regular', fontSize: 13, color: '#8A8A8A', marginTop: -2 },
   textoVazio: { fontFamily: 'Homenaje_400Regular', fontSize: 15, color: '#8A8A8A', marginTop: 8 },
   vazioCard: { alignItems: 'center', paddingVertical: 30, gap: 10 },
   vazioTexto: { fontFamily: 'Homenaje_400Regular', fontSize: 18, color: '#B0B0B0' },
+  
+  btnCertificado: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EEF4FF',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: BLUE_COLOR,
+    gap: 4,
+    marginLeft: 10,
+  },
+  btnCertificadoTexto: {
+    fontFamily: 'Homenaje_400Regular',
+    fontSize: 14,
+    color: BLUE_COLOR,
+  },
 });

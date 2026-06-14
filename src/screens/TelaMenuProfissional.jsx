@@ -1,13 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Modal, TextInput, ActivityIndicator, Alert, Image, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import { File } from 'expo-file-system';
+import * as FileSystem from 'expo-file-system';
 import { decode } from 'base64-arraybuffer';
 import { useFocusEffect } from '@react-navigation/native';
 import Slider from '@react-native-community/slider';
-
 import LogoIcon from '../assets/icons/LogoIcon';
 import { logout } from "../services/auth";
 import { supabase } from '../services/supabase';
@@ -87,9 +86,16 @@ export default function TelaMenuProfissional({ navigation }) {
 
   async function handleAnexarCertificado() {
     try {
-      const result = await DocumentPicker.getDocumentAsync({ type: ['application/pdf', 'image/*'], copyToCacheDirectory: true });
-      if (!result.canceled) setCertificadoUri(result.assets[0].uri);
-    } catch (error) { Alert.alert('Erro', 'Não foi possível selecionar o documento.'); }
+      const result = await DocumentPicker.getDocumentAsync({ 
+        type: ['application/pdf', 'image/jpeg', 'image/png'], 
+        copyToCacheDirectory: true 
+      });
+      if (!result.canceled) {
+        setCertificadoUri(result.assets[0].uri);
+      }
+    } catch (error) { 
+      Alert.alert('Erro', 'Não foi possível selecionar o documento.'); 
+    }
   }
 
   async function handleSalvarEspecialidade() {
@@ -102,16 +108,25 @@ export default function TelaMenuProfissional({ navigation }) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       let certificadoPath = null;
-      
+
       if (certificadoUri) {
-        const localFile = new File(certificadoUri);
-        const base64 = await localFile.base64();
+        const base64 = await FileSystem.readAsStringAsync(certificadoUri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        
         const fileExt = certificadoUri.split('.').pop() || 'pdf';
         const fileName = `${user.id}/certificados/${Date.now()}.${fileExt}`;
         const contentType = fileExt === 'pdf' ? 'application/pdf' : `image/${fileExt}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage.from('documentos-sigilosos').upload(fileName, decode(base64), { contentType, upsert: true });
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('perfis_e_portfolios')
+          .upload(fileName, decode(base64), { contentType, upsert: true });
+          
         if (uploadError) throw new Error("Erro no upload: " + uploadError.message);
-        const { data: urlData } = supabase.storage.from('documentos-sigilosos').getPublicUrl(uploadData.path);
+        
+        const { data: urlData } = supabase.storage
+          .from('perfis_e_portfolios')
+          .getPublicUrl(uploadData.path);
+          
         certificadoPath = urlData.publicUrl; 
       }
 
@@ -153,7 +168,7 @@ export default function TelaMenuProfissional({ navigation }) {
 
       setEspecialidades(prev => [...prev, nomeLimpo]);
       fecharModalCancelando();
-      Alert.alert('Sucesso', 'Especialidade adicionada!');
+      Alert.alert('Sucesso', 'Especialidade e certificado adicionados!');
 
     } catch (error) { 
       Alert.alert('Erro', 'Não foi possível salvar a especialidade.'); 
