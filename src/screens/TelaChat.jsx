@@ -6,12 +6,11 @@ import {
   TouchableOpacity,
   TextInput,
   FlatList,
-  KeyboardAvoidingView,
-  Platform,
+  Keyboard,
   Alert,
   Modal
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useServico } from '../context/ServicoContext';
 import { supabase } from '../services/supabase';
@@ -21,6 +20,7 @@ const BLUE = '#076BDE';
 const SUGESTOES = ['Olá', 'Está vindo ?'];
 
 export default function TelaChat({ navigation, route }) {
+  const insets = useSafeAreaInsets();
   const profissionalNome = route?.params?.profissionalNome ?? 'Profissional';
   const profissionalId   = route?.params?.profissionalId   ?? 'default';
   const categoria        = route?.params?.categoria        ?? '';
@@ -32,9 +32,17 @@ export default function TelaChat({ navigation, route }) {
   const [texto, setTexto] = useState('');
   const [chatId, setChatId] = useState(null);
   const [userId, setUserId] = useState(null);
-  const [servicoFinalizado, setServicoFinalizado] = useState(null); 
+  const [servicoFinalizado, setServicoFinalizado] = useState(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   
   const flatRef = useRef(null);
+
+  // Listener manual de teclado — mesma abordagem do TelaChatProfissional
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardDidShow', e => setKeyboardHeight(e.endCoordinates.height));
+    const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboardHeight(0));
+    return () => { show.remove(); hide.remove(); };
+  }, []);
 
   useEffect(() => {
     if (iniciarServico) {
@@ -122,7 +130,6 @@ export default function TelaChat({ navigation, route }) {
       channelServico = supabase.channel(`status_servico_${sId}`)
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'servicos', filter: `id=eq.${sId}` }, 
           payload => {
-            console.log('STATUS DO SERVIÇO MUDOU:', payload.new.status);
             if (payload.new.status === 'finalizado') {
               const valorFormatado = payload.new.valor ? Number(payload.new.valor).toFixed(2).replace('.', ',') : '0,00';
               setServicoFinalizado({ valor: valorFormatado });
@@ -169,24 +176,18 @@ export default function TelaChat({ navigation, route }) {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <View style={styles.container}>
       <Modal visible={!!servicoFinalizado} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Ionicons name="checkmark-circle" size={80} color="#388E3C" />
             <Text style={styles.modalTitle}>Serviço Finalizado!</Text>
             <Text style={styles.modalText}>O profissional encerrou o atendimento.</Text>
-            
             <Text style={styles.modalValor}>R$ {servicoFinalizado?.valor}</Text>
-            
             <TouchableOpacity 
               style={styles.btnPagar} 
               onPress={() => {
-                if (finalizarServico) {
-                  finalizarServico();
-                } else {
-                  console.log("Aviso: finalizarServico ainda não foi criada no ServicoContext.");
-                }
+                if (finalizarServico) finalizarServico();
                 Alert.alert('Pagamento', 'Funcionalidade em desenvolvimento 🚧', [
                   { text: 'OK', onPress: () => navigation.popToTop() }
                 ]);
@@ -198,7 +199,8 @@ export default function TelaChat({ navigation, route }) {
         </View>
       </Modal>
 
-      <View style={styles.header}>
+      {/* Header com paddingTop respeitando safe area */}
+      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.btnVoltar}>
           <Ionicons name="arrow-back" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -215,14 +217,10 @@ export default function TelaChat({ navigation, route }) {
           <Text style={styles.headerNome}>{profissionalNome}</Text>
           <Ionicons name="information-circle-outline" size={16} color="#555" />
         </TouchableOpacity>
-
       </View>
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={60}
-      >
+      {/* marginBottom empurra o conteúdo para cima quando o teclado abre */}
+      <View style={{ flex: 1, marginBottom: keyboardHeight }}>
         <FlatList
           ref={flatRef}
           data={mensagens}
@@ -240,7 +238,7 @@ export default function TelaChat({ navigation, route }) {
           ))}
         </View>
 
-        <View style={styles.inputRow}>
+        <View style={[styles.inputRow, { paddingBottom: insets.bottom + 10 }]}>
           <TextInput
             style={styles.input}
             placeholder="Mensagem..."
@@ -258,8 +256,8 @@ export default function TelaChat({ navigation, route }) {
             <Ionicons name="send" size={18} color="#FFF" />
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      </View>
+    </View>
   );
 }
 
@@ -271,23 +269,27 @@ const styles = StyleSheet.create({
   modalTitle: { fontFamily: 'Homenaje_400Regular', fontSize: 36, color: '#111', marginTop: 15 },
   modalText: { fontFamily: 'Homenaje_400Regular', fontSize: 20, color: '#555', textAlign: 'center', marginTop: 5 },
   modalValor: { fontFamily: 'Homenaje_400Regular', fontSize: 46, color: '#388E3C', marginVertical: 25 },
-  btnPagar: { backgroundColor: BLUE, width: '100%', paddingVertical: 16, borderRadius: 15, alignItems: 'center', borderWidth: 1.5, borderColor: '#333' },
+  btnPagar: { backgroundColor: '#076BDE', width: '100%', paddingVertical: 16, borderRadius: 15, alignItems: 'center', borderWidth: 1.5, borderColor: '#333' },
   btnPagarTexto: { fontFamily: 'Homenaje_400Regular', fontSize: 24, color: '#FFF' },
-  header: { height: 60, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, backgroundColor: '#D9D9D9', borderBottomWidth: 1, borderBottomColor: '#9BA7B1', gap: 12 },
-  btnVoltar: { width: 38, height: 38, borderRadius: 19, backgroundColor: BLUE, justifyContent: 'center', alignItems: 'center' },
+
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 12, backgroundColor: '#D9D9D9', borderBottomWidth: 1, borderBottomColor: '#9BA7B1', gap: 12 },
+  btnVoltar: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#076BDE', justifyContent: 'center', alignItems: 'center' },
   headerNomeArea: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 5 },
   headerNome: { fontFamily: 'Homenaje_400Regular', fontSize: 20, color: '#111' },
+
   listaPadding: { paddingHorizontal: 16, paddingVertical: 12, gap: 8 },
   bolha: { maxWidth: '70%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, marginVertical: 4 },
-  bolhaMinha: { alignSelf: 'flex-end', backgroundColor: BLUE, borderBottomRightRadius: 4 },
+  bolhaMinha: { alignSelf: 'flex-end', backgroundColor: '#076BDE', borderBottomRightRadius: 4 },
   bolhaDele: { alignSelf: 'flex-start', backgroundColor: '#EEE', borderBottomLeftRadius: 4 },
   bolhaTexto: { fontSize: 15, color: '#222', fontFamily: 'Homenaje_400Regular' },
   bolhaTextoMinha: { color: '#FFF' },
+
   sugestoesRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 8 },
   sugestao: { backgroundColor: '#EEE', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: '#CCC' },
   sugestaoTexto: { fontSize: 14, color: '#444', fontFamily: 'Homenaje_400Regular' },
-  inputRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 24, paddingTop: 8, gap: 10, backgroundColor: '#D9D9D9' },
+
+  inputRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, gap: 10, backgroundColor: '#D9D9D9' },
   input: { flex: 1, height: 46, backgroundColor: '#EEE', borderRadius: 23, paddingHorizontal: 16, fontSize: 15, color: '#333', borderWidth: 1, borderColor: '#CCC', fontFamily: 'Homenaje_400Regular' },
-  btnEnviar: { width: 46, height: 46, borderRadius: 23, backgroundColor: BLUE, justifyContent: 'center', alignItems: 'center' },
+  btnEnviar: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#076BDE', justifyContent: 'center', alignItems: 'center' },
   btnEnviarDisabled: { backgroundColor: '#9BA7B1' },
 });

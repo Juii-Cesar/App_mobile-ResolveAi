@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Modal, TextInput, ActivityIndicator, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, Modal, TextInput, ActivityIndicator, Keyboard, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../services/supabase';
-// import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 const BLUE_COLOR = '#076BDE';
 const BG_GRAY = '#DBDBDB';
@@ -10,17 +9,20 @@ const WHITE_COLOR = '#FFFFFF';
 const MODAL_BG = '#F1F4F6';
 
 export default function TelaInicial({ navigation }) {
+  const insets = useSafeAreaInsets();
   const [modalVisivel, setModalVisivel] = useState(false);
   const [email, setEmail] = useState('');
   const [carregando, setCarregando] = useState(false);
   const [modalAviso, setModalAviso] = useState({ visible: false, titulo: '', mensagem: '', tipo: 'default' });
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const fecharAviso = () => setModalAviso({ visible: false, titulo: '', mensagem: '', tipo: 'default' });
 
-  useEffect(() => {
-    // GoogleSignin.configure({
-    //   webClientId: ' ', 
-    // });
+  // Listener manual — mesma abordagem do TelaChatProfissional
+  React.useEffect(() => {
+    const show = Keyboard.addListener('keyboardDidShow', e => setKeyboardHeight(e.endCoordinates.height));
+    const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboardHeight(0));
+    return () => { show.remove(); hide.remove(); };
   }, []);
 
   const handleLoginEmail = async () => {
@@ -36,15 +38,12 @@ export default function TelaInicial({ navigation }) {
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email: emailLimpo,
-        options: {
-          shouldCreateUser: true, 
-        },
+        options: { shouldCreateUser: true },
       });
 
       if (error) throw error;
 
       setModalVisivel(false);
-
       navigation.navigate('Token', { emailUsuario: emailLimpo });
 
     } catch (error) {
@@ -59,7 +58,7 @@ export default function TelaInicial({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.content}>
         
         <View style={styles.textGroup}>
@@ -76,72 +75,65 @@ export default function TelaInicial({ navigation }) {
         </TouchableOpacity>
       </View>
 
+      {/* Bottom sheet de login — sem KeyboardAvoidingView nem ScrollView
+          O marginBottom empurra o sheet para cima junto com o teclado */}
       <Modal
         animationType="slide"
         transparent={true}
         visible={modalVisivel}
         onRequestClose={() => setModalVisivel(false)}
       >
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setModalVisivel(false)}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={{ width: '100%' }}
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => { Keyboard.dismiss(); setModalVisivel(false); }}>
+          <View
+            style={[styles.bottomSheet, { marginBottom: keyboardHeight, paddingBottom: insets.bottom + 30 }]}
+            onStartShouldSetResponder={() => true}
           >
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end' }}
+            <View style={styles.dragHandle} />
+
+            <View style={styles.emailRow}>
+              <TextInput 
+                style={styles.emailInput} 
+                keyboardType="email-address"
+                placeholder="Email"
+                placeholderTextColor="#666"
+                value={email}
+                onChangeText={(texto) => setEmail(texto)}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+
+            <TouchableOpacity 
+              style={styles.modalButton}
+              onPress={handleLoginEmail}
+              disabled={carregando}
             >
-              <View style={styles.bottomSheet} onStartShouldSetResponder={() => true}>
-                
-                <View style={styles.dragHandle} />
+              {carregando ? (
+                <ActivityIndicator color={WHITE_COLOR} size="small" />
+              ) : (
+                <Text style={styles.modalButtonText}>ENTRAR</Text>
+              )}
+            </TouchableOpacity>
 
-                <View style={styles.emailRow}>
-                  <TextInput 
-                    style={styles.emailInput} 
-                    keyboardType="email-address"
-                    placeholder="Email"
-                    placeholderTextColor="#666"
-                    value={email}
-                    onChangeText={(texto) => setEmail(texto)}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                </View>
+            <View style={styles.dividerRow}>
+              <View style={styles.line} />
+              <Text style={styles.ouText}>ou</Text>
+              <View style={styles.line} />
+            </View>
 
-                <TouchableOpacity 
-                  style={styles.modalButton}
-                  onPress={handleLoginEmail}
-                  disabled={carregando}
-                >
-                  {carregando ? (
-                    <ActivityIndicator color={WHITE_COLOR} size="small" />
-                  ) : (
-                    <Text style={styles.modalButtonText}>ENTRAR</Text>
-                  )}
-                </TouchableOpacity>
-
-                <View style={styles.dividerRow}>
-                  <View style={styles.line} />
-                  <Text style={styles.ouText}>ou</Text>
-                  <View style={styles.line} />
-                </View>
-
-                <TouchableOpacity 
-                  style={styles.socialButton}
-                  activeOpacity={0.7}
-                  onPress={handleLoginGoogle}
-                  disabled={carregando}
-                >
-                  {carregando ? (
-                    <ActivityIndicator color="#000" size="small" />
-                  ) : (
-                    <Text style={styles.socialButtonText}>Continuar com o Google</Text>
-                  )}
-                </TouchableOpacity>
-
-              </View>
-            </ScrollView>
-          </KeyboardAvoidingView>
+            <TouchableOpacity 
+              style={styles.socialButton}
+              activeOpacity={0.7}
+              onPress={handleLoginGoogle}
+              disabled={carregando}
+            >
+              {carregando ? (
+                <ActivityIndicator color="#000" size="small" />
+              ) : (
+                <Text style={styles.socialButtonText}>Continuar com o Google</Text>
+              )}
+            </TouchableOpacity>
+          </View>
         </TouchableOpacity>
       </Modal>
 
@@ -158,7 +150,7 @@ export default function TelaInicial({ navigation }) {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -210,8 +202,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 45, 
     borderTopRightRadius: 45, 
     paddingHorizontal: 35, 
-    paddingTop: 15, 
-    paddingBottom: 50, 
+    paddingTop: 15,
     alignItems: 'center',
     width: '100%'
   },
